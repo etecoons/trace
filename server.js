@@ -414,6 +414,14 @@ app.get('/managers/toast', (req, res) => {
     res.sendFile(path.join(PUBLIC_DIR, 'managers', 'toast.js'));
 });
 
+app.get('/health', (_req, res) => {
+  res.json({
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    uptime: process.uptime()
+  });
+});
+
 app.get('*', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });

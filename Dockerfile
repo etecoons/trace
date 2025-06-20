@@ -14,5 +14,8 @@ COPY --from=builder /app .
 # Expose port
 EXPOSE 3000
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=5s --start-period=5s CMD wget -qO- http://localhost:3000/health || exit 1
+
 # Start the application
 CMD ["npm", "start"] 
