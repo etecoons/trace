@@ -1,6 +1,6 @@
 [package]
 name = "frontend"
-version = "1.0.0"
+version = "1.0.1"
 edition = "2024"
 authors = ["UberMetroid <admin@ubermetroid.com>"]
 license = "GPL-3.0-only"
