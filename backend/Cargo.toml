@@ -2,6 +2,12 @@
 name = "backend"
 version = "1.0.0"
 edition = "2024"
+authors = ["UberMetroid <admin@ubermetroid.com>"]
+license = "GPL-3.0-only"
+repository = "https://github.com/UberMetroid/RustWho"
+homepage = "https://github.com/UberMetroid/RustWho"
+description = "Axum backend service for RustWho."
+readme = "../README.md"
 
 [dependencies]
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "net", "time", "io-util"] }

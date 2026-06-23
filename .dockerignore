@@ -1,17 +1,36 @@
+# Version control
+.git
+.gitignore
+.gitattributes
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Rust build outputs
 target/
+**/target/
 frontend/dist/
 frontend/target/
-.git/
-.github/
-.idea/
+dist/
+
+# Local data & uploads
+local_uploads/
+uploads/
+data/
+
+# Development configurations
 .vscode/
-node_modules/
-package-lock.json
-package.json
-nodemon.json
-server.js
-scripts/
-public/
-docker-compose.yml
-.env
-.env.example
+.idea/
+*.swp
+*.swo
+.cursorrules
+
+# System files
+.DS_Store
+Thumbs.db
+
+# Docker files
+docker-compose*.yml
+Dockerfile*
