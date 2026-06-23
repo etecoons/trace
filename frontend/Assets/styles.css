@@ -331,23 +331,23 @@ header {
 }
 
 .language-select {
-    background-color: var(--container);
-    color: var(--text);
-    border: 1px solid var(--border);
+    background-color: var(--container-bg, var(--container, var(--textarea-bg)));
+    color: var(--text-color, var(--text));
+    border: 1px solid var(--border-color, var(--border));
     border-radius: 8px;
-    padding: 0.35rem 1.8rem 0.35rem 0.6rem;
+    padding: 0.35rem 1.8rem 0.35rem 0.5rem;
     font-size: 0.85rem;
     cursor: pointer;
     outline: none;
-    font-weight: 600;
-    transition: all var(--transition);
+    font-weight: 500;
+    transition: all 0.2s ease;
     appearance: none;
     -webkit-appearance: none;
     -moz-appearance: none;
-    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.5' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
+    background-image: url("data:image/svg+xml;charset=utf-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E");
     background-repeat: no-repeat;
     background-position: right 0.5rem center;
-    background-size: 0.85rem;
+    background-size: 1rem;
 }
 
 .language-select option {
@@ -357,7 +357,7 @@ header {
 
 .language-select:hover {
     background-color: var(--button-hover);
-    border-color: var(--primary);
+    border-color: var(--primary-color, var(--primary));
 }
 
 /* Layout Footer */
