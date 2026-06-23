@@ -23,8 +23,6 @@ services:
       - SITE_TITLE=RustWho
       - ALLOWED_ORIGINS=*
       - RUSTWHO_PIN=1234
-      - APPRISE_URL=
-      - APPRISE_MESSAGE=WHOIS Lookup for {query} ({query_type})
 ```
 
 2. Spin up the container:
@@ -45,8 +43,6 @@ docker compose up -d
 | `SITE_TITLE` | Custom title rendered in the navigation header | `RustWho` | Optional |
 | `ALLOWED_ORIGINS` | Comma-separated HTTP request origins (CORS filter) | `*` | Optional |
 | `RUSTWHO_PIN` | Optional 4-10 digit PIN to lock access to the utility | None | Optional |
-| `APPRISE_URL` | Apprise API webhook URL (e.g. Discord, Telegram) | None | Optional |
-| `APPRISE_MESSAGE` | Custom webhook alert message template | `WHOIS Lookup for {query} ({query_type})` | Optional |
 
 ---
 

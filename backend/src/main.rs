@@ -47,8 +47,6 @@ static RE_IPV6: LazyLock<regex::Regex> = LazyLock::new(|| {
 pub struct AppConfig {
     pub port: u16,
     pub site_title: String,
-    pub apprise_url: Option<String>,
-    pub apprise_message: String,
     pub pin: Option<String>,
 }
 
@@ -60,9 +58,6 @@ impl AppConfig {
             .and_then(|p| p.parse().ok())
             .unwrap_or(4404);
         let site_title = std::env::var("SITE_TITLE").unwrap_or_else(|_| "RustWho".to_string());
-        let apprise_url = std::env::var("APPRISE_URL").ok().filter(|s| !s.is_empty());
-        let apprise_message = std::env::var("APPRISE_MESSAGE")
-            .unwrap_or_else(|_| "WHOIS Lookup for {query} ({query_type})".to_string());
         let pin = std::env::var("RUSTWHO_PIN")
             .or_else(|_| std::env::var("PIN"))
             .ok()
@@ -75,8 +70,6 @@ impl AppConfig {
         Self {
             port,
             site_title,
-            apprise_url,
-            apprise_message,
             pin,
         }
     }
@@ -1209,48 +1202,6 @@ async fn fetch_asn_data(
     })
 }
 
-async fn send_notification(
-    query: &str,
-    query_type: &str,
-    config: &AppConfig,
-    client: &reqwest::Client,
-) {
-    let url = match &config.apprise_url {
-        Some(u) => u,
-        None => return,
-    };
-
-    let message = config
-        .apprise_message
-        .replace("{query}", query)
-        .replace("{query_type}", query_type);
-
-    let body = serde_json::json!({
-        "urls": url,
-        "body": message,
-        "title": format!("{} Notification", config.site_title),
-    });
-
-    tracing::info!("Sending notification via Apprise to URL: {}", url);
-    match client
-        .post("https://api.apprise.io/notify")
-        .json(&body)
-        .send()
-        .await
-    {
-        Ok(resp) => {
-            if resp.status().is_success() {
-                tracing::info!("Notification sent successfully.");
-            } else {
-                tracing::error!("Apprise API returned error status: {:?}", resp.status());
-            }
-        }
-        Err(e) => {
-            tracing::error!("Failed to connect to Apprise API: {}", e);
-        }
-    }
-}
-
 // --- API Router Handler ---
 
 async fn handle_lookup(
@@ -1336,14 +1287,6 @@ async fn handle_lookup(
                         }]
                     });
 
-                    let config_clone = state.config.clone();
-                    let client_clone = state.client.clone();
-                    let query_clone = query.clone();
-                    tokio::spawn(async move {
-                        send_notification(&query_clone, "whois", &config_clone, &client_clone)
-                            .await;
-                    });
-
                     Json(serde_json::json!({
                         "type": "whois",
                         "data": response_data
@@ -1364,20 +1307,11 @@ async fn handle_lookup(
             }
         }
         "ip" => match try_ip_lookup(&state.client, &query).await {
-            Ok(ip_data) => {
-                let config_clone = state.config.clone();
-                let client_clone = state.client.clone();
-                let query_clone = query.clone();
-                tokio::spawn(async move {
-                    send_notification(&query_clone, "ip", &config_clone, &client_clone).await;
-                });
-
-                Json(serde_json::json!({
-                    "type": "ip",
-                    "data": ip_data
-                }))
-                .into_response()
-            }
+            Ok(ip_data) => Json(serde_json::json!({
+                "type": "ip",
+                "data": ip_data
+            }))
+            .into_response(),
             Err(e) => {
                 tracing::error!("IP lookup error: {}", e);
                 (
@@ -1393,20 +1327,11 @@ async fn handle_lookup(
         "asn" => {
             let asn_number = query.to_uppercase().replace("AS", "");
             match fetch_asn_data(&state.client, &asn_number).await {
-                Ok(asn_data) => {
-                    let config_clone = state.config.clone();
-                    let client_clone = state.client.clone();
-                    let query_clone = query.clone();
-                    tokio::spawn(async move {
-                        send_notification(&query_clone, "asn", &config_clone, &client_clone).await;
-                    });
-
-                    Json(serde_json::json!({
-                        "type": "asn",
-                        "data": asn_data.data
-                    }))
-                    .into_response()
-                }
+                Ok(asn_data) => Json(serde_json::json!({
+                    "type": "asn",
+                    "data": asn_data.data
+                }))
+                .into_response(),
                 Err(e) => {
                     tracing::error!("ASN lookup error: {}", e);
                     (
