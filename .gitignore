@@ -1,23 +1,29 @@
-# Rust
+# Rust build artifacts
 target/
+**/target/
 
-# Trunk / Yew
+# Trunk build artifacts
+dist/
 frontend/dist/
 frontend/target/
 
-# Environment
+# Local configuration
 .env
 .env.local
+.env.*.local
 
-# IDEs
-.idea/
+# Local databases and user data
+data/
+uploads/
+local_uploads/
+
+# IDE/Editor config
 .vscode/
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
+.idea/
+*.swp
+*.swo
+.cursor/
 
-# OS files
+# OS specific files
 .DS_Store
 Thumbs.db

@@ -18,8 +18,8 @@ To build and run this project locally, you will need:
 ### Setup & Run
 
 1. Clone the repository.
-2. For frontend development: Run `trunk serve` (within the frontend directory, if applicable, or project root).
-3. For backend/full stack: Run `cargo run` (within the backend directory, if applicable, or project root).
+2. For frontend development: Run `trunk serve` (within the `frontend` directory if applicable, or project root).
+3. For backend/full stack: Run `cargo run` (within the `backend` directory if applicable, or project root).
 
 ## Standard Checks
 
