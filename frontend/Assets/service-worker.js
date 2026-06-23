@@ -1,4 +1,4 @@
-const CACHE_NAME = "DUMBWHOIS_PWA_CACHE_V1";
+const CACHE_NAME = "RUSTWHO_PWA_CACHE_V1";
 const ASSETS_TO_CACHE = [];
 
 const preload = async () => {

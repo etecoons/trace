@@ -1,72 +1,106 @@
-name: Build and Push Docker Image
+name: "Build & Publish Docker Image (CD)"
 
 on:
   push:
     branches:
-      - main # Trigger the workflow on pushes to the main branch
+      - main
+      - dev
+  workflow_dispatch:
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  PLATFORMS: linux/amd64,linux/arm64
 
 jobs:
-  build:
+  build-and-push:
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
 
     steps:
-      # Step 1: Check out the repository
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
 
-      # Step 2: Set up Docker Buildx with container driver
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
       - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
         with:
-          driver: docker-container # Ensure multi-platform support
-          install: true
+          driver-opts: |
+            image=moby/buildkit:latest
+            network=host
 
-      # Step 3: Build Docker Image (for all cases, including forks)
-      - name: Build Docker Image
-        uses: docker/build-push-action@v4
+      # Log in to GitHub Container Registry (GHCR)
+      - name: Log in to GHCR
+        uses: docker/login-action@v3
         with:
-          context: .
-          file: ./Dockerfile
-          push: false  # Don't push, just build
-          tags: |
-            dumbwareio/dumbwhois:latest
-            dumbwareio/dumbwhois:${{ github.sha }}
-            dumbwareio/dumbwhois:build-${{ github.run_number }}
-          platforms: linux/amd64,linux/arm64
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-  push:
-    runs-on: ubuntu-latest
-    needs: build
-    if: github.repository_owner == github.actor || github.repository_owner == 'dumbwareio' # Only push for repository owner, not forks
-
-    steps:
-      # Step 4: Check out the repository
-      - name: Checkout code
-        uses: actions/checkout@v3
-
-      # Step 5: Set up Docker Buildx again (ensuring multi-platform support)
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
-        with:
-          driver: docker-container
-          install: true
-
-      # Step 6: Log in to Docker Hub (only for non-forked repositories)
+      # Optionally log in to Docker Hub if credentials are provided
       - name: Log in to Docker Hub
-        uses: docker/login-action@v2
+        env:
+          DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
+          DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+        if: ${{ env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != '' }}
+        uses: docker/login-action@v3
         with:
-          username: ${{ secrets.DOCKER_USERNAME }}
-          password: ${{ secrets.DOCKER_PASSWORD }}
+          username: ${{ env.DOCKER_USERNAME }}
+          password: ${{ env.DOCKER_PASSWORD }}
 
-      # Step 7: Push Docker Image (only for repository owner)
-      - name: Push Docker Image
-        uses: docker/build-push-action@v4
+      - name: Extract version from backend/Cargo.toml
+        id: package_version
+        run: |
+          VERSION=$(grep -m 1 '^version = ' backend/Cargo.toml | cut -d '"' -f 2)
+          echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+          echo "Extracted version: $VERSION"
+
+      - name: Generate Docker Metadata
+        id: meta
+        run: |
+          LOWER_IMAGE_NAME_GHCR=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
+          LOWER_IMAGE_NAME_DOCKER=$(echo "ubermetroid/rustwho" | tr '[:upper:]' '[:lower:]')
+          VERSION=${{ steps.package_version.outputs.VERSION }}
+          
+          # Initialize tags list
+          TAGS=""
+          
+          # Add GHCR tags
+          TAGS="${TAGS}${LOWER_IMAGE_NAME_GHCR}:${VERSION}"
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            TAGS="${TAGS},${LOWER_IMAGE_NAME_GHCR}:latest"
+          elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+            TAGS="${TAGS},${LOWER_IMAGE_NAME_GHCR}:dev"
+          fi
+          
+          # Add Docker Hub tags (if credentials exist)
+          if [ "${{ secrets.DOCKER_USERNAME }}" != "" ]; then
+            TAGS="${TAGS},${LOWER_IMAGE_NAME_DOCKER}:${VERSION}"
+            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+              TAGS="${TAGS},${LOWER_IMAGE_NAME_DOCKER}:latest"
+            elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
+              TAGS="${TAGS},${LOWER_IMAGE_NAME_DOCKER}:dev"
+            fi
+          fi
+          
+          echo "TAGS=${TAGS}" >> $GITHUB_OUTPUT
+          echo "Generated tags: ${TAGS}"
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
         with:
           context: .
-          file: ./Dockerfile
-          push: true  # This will push the image to Docker Hub
-          tags: |
-            dumbwareio/dumbwhois:latest
-            dumbwareio/dumbwhois:${{ github.sha }}
-            dumbwareio/dumbwhois:build-${{ github.run_number }}
-          platforms: linux/amd64,linux/arm64
+          platforms: ${{ env.PLATFORMS }}
+          push: true
+          tags: ${{ steps.meta.outputs.TAGS }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+          provenance: false
+          build-args: |
+            BUILDKIT_INLINE_CACHE=1

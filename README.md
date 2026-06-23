@@ -1,172 +1,114 @@
-# DumbWhois
+# RustWho
 
-A simple web application for looking up WHOIS, IP, and ASN information using free APIs. The application automatically detects the type of query and provides formatted results with a clean, modern UI that supports both light and dark modes.
+A secure, lightning-fast WHOIS, IP, and ASN lookup web utility built in Rust using **Yew** (WebAssembly frontend) and **Axum + Tokio** (asynchronous backend).
 
-![image](https://github.com/user-attachments/assets/a4f84c05-c8f8-4e75-9788-dc70adc2ad9b)
+---
 
+## ⚡ Quick Start (Time-To-First-Run)
 
-## Features
-
-- 🔍 Automatic detection of query type (Domain, IP, or ASN)
-- 🌐 Direct WHOIS domain lookup with support for all TLDs
-- 🌍 IP geolocation with multiple fallback services
-- 🔢 ASN (Autonomous System Number) details
-- 🎨 Clean and modern UI with dark mode support
-- 📱 Responsive design for mobile and desktop
-- 🚫 No authentication required
-- ⚙️ Environment variable configuration
-- 🔄 Automatic service fallback for IP lookups
-- 🌐 Full IPv6 support
-- 📋 Clear source attribution for all lookups
-- 🔍 DNS resolution for domain IP addresses
-- 🔗 URL query parameter support for direct lookups
-- 🔖 Permalink anchors for sharing specific result sections
-- 🔒 CORS support for cross-origin requests
-- 🌐 PWA Support
-
-## APIs Used
-
-The application uses the following free services:
-
-- **WHOIS Lookup**: Direct WHOIS protocol
-  - Native WHOIS queries to authoritative servers
-  - Support for all TLDs including ccTLDs
-  - DNS resolution for IPv4 and IPv6 addresses
-  - No API key required
-  - No rate limits
-
-- **IP Lookup**: Multiple services with automatic fallback
-  1. [ipapi.co](https://ipapi.co)
-     - Primary service for IP geolocation
-     - Free tier with rate limits
-     - No API key required
-  2. [ip-api.com](https://ip-api.com)
-     - First fallback service
-     - Free for non-commercial use
-     - No API key required
-  3. [ipwho.is](https://ipwho.is)
-     - Second fallback service
-     - Free with no rate limits
-     - No API key required
-
-- **ASN Lookup**: [RIPEstat API](https://stat.ripe.net/docs/data-api/ripestat-data-api) + [PeeringDB](https://www.peeringdb.com/apidocs/)
-  - RIPEstat provides ASN details and WHOIS information
-  - PeeringDB provides traffic ratio and website info
-  - Works for all RIRs (ARIN, RIPE, APNIC, LACNIC, AFRINIC)
-  - Free to use
-  - No authentication required
-
-## Setup
-
-### Standard Setup
-
-1. Clone the repository:
-```bash
-git clone https://github.com/dumbwareio/dumbwhois.git
-cd dumbwhois
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Configure environment variables:
-```bash
-cp .env.example .env
-# Edit .env to set your desired port (default is 3000)
-```
-
-4. Start the server:
-```bash
-npm start
-```
-
-For development with auto-reload:
-```bash
-npm run dev
-```
-
-### Docker Setup
-
-1. Build the Docker image:
-```bash
-docker build -t dumbwhois .
-```
-
-2. Run the container:
-```bash
-docker run -p 3000:3000 -d dumbwhois
-```
-
-Or using Docker Compose:
-```bash
-docker-compose up -d
-```
-
-docker-compose.yml:
+### Running via Docker Compose
+1. Ensure a `docker-compose.yml` file is configured in your project root:
 ```yaml
 services:
-   dumbwhois:
-      image: dumbwareio/dumbwhois:latest
-      container_name: dumbwhois
-      restart: unless-stopped
-      ports:
-      - ${DUMBWHOIS_PORT:-3000}:3000
-      environment:
-      - SITE_TITLE=${DUMBWHOIS_SITE_TITLE:-DumbWhois}
-      # (Optional) Restrict origins - ex: https://subdomain.domain.tld,https://auth.proxy.tld,http://internalip:port' (empty/default is '*')
-      # - ALLOWED_ORIGINS=${DUMBWHOIS_ALLOWED_ORIGINS:-*}
+  rustwho:
+    image: ubermetroid/rustwho:latest
+    container_name: rustwho
+    restart: unless-stopped
+    ports:
+      - 4404:4404
+    environment:
+      - PORT=4404
+      - SITE_TITLE=RustWho
+      - ALLOWED_ORIGINS=*
+      - RUSTWHO_PIN=1234
+      - APPRISE_URL=
+      - APPRISE_MESSAGE=WHOIS Lookup for {query} ({query_type})
+```
+2. Spin up the container:
+```bash
+docker compose up -d
+```
+3. Open your browser and navigate to `http://localhost:4404`.
+
+---
+
+## 🛠️ Local Development
+
+### 1. Prerequisites
+Ensure you have the Rust toolchain installed. Add the WebAssembly target and install the **Trunk** WASM bundler:
+```bash
+# Add WebAssembly target
+rustup target add wasm32-unknown-unknown
+
+# Install Trunk
+wget -qO- "https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-x86_64-unknown-linux-gnu.tar.gz" | tar -xzf- -C /usr/local/bin
 ```
 
-## Usage
+### 2. Run the Application
+1. **Frontend**: Start the Yew development server (runs with hot-reloading at `http://localhost:8080`):
+   ```bash
+   cd frontend
+   trunk serve
+   ```
+2. **Backend**: Start the Axum API server (listens on `http://localhost:4404`):
+   ```bash
+   cd backend
+   cargo run
+   ```
 
-1. Visit `http://localhost:3000` in your browser
-2. Enter any of the following:
-   - Domain name (e.g., `yahoo.com`, `europa.eu`)
-   - IP address (IPv4 or IPv6, e.g., `8.8.8.8`, `2001:4860:4860::8888`)
-   - ASN number (e.g., `AS13335` or just `13335`)
-3. The application will automatically detect the type of query and display formatted results
-4. Toggle between light and dark modes using the moon icon in the top-right corner
+---
 
-You can also perform direct lookups by using the `lookup` query parameter in the URL:
-- Domain lookup: `http://localhost:3000/?lookup=google.com`
-- IP lookup: `http://localhost:3000/?lookup=8.8.8.8`
-- ASN lookup: `http://localhost:3000/?lookup=AS13335`
+## 📋 Environment Configuration
 
-### Permalink Anchors
+| Variable | Description | Default | Required |
+| :--- | :--- | :--- | :--- |
+| `PORT` | Local host port mapping for the Axum backend | `4404` | Optional |
+| `SITE_TITLE` | Custom title rendered in the navigation header | `RustWho` | Optional |
+| `ALLOWED_ORIGINS` | Comma-separated HTTP request origins (CORS filter) | `*` | Optional |
+| `RUSTWHO_PIN` | Optional 4-10 digit PIN to lock access to the utility | None | Optional |
+| `APPRISE_URL` | Apprise API webhook URL (e.g. Discord, Telegram) | None | Optional |
+| `APPRISE_MESSAGE` | Custom webhook alert message template | `WHOIS Lookup for {query} ({query_type})` | Optional |
 
-Each section of the results now has a permalink anchor that allows direct linking to specific information:
-- Click the link icon (🔗) next to any section header to copy a direct link to that section
-- Share links to specific sections, like nameservers or IP addresses: `http://localhost:3000/?lookup=google.com#nameservers`
-- When following a permalink, the page will automatically scroll to the relevant section
-- Sections are briefly highlighted when accessed via permalink for better visibility
+---
 
-## Example Queries
+## 📂 Repository File Tree
 
-- **Domain Lookup**: `google.com`, `europa.eu`, `bbc.co.uk`
-- **IPv4 Lookup**: `8.8.8.8`, `1.1.1.1`, `140.82.121.4`
-- **IPv6 Lookup**: `2001:4860:4860::8888`, `2606:4700:4700::1111`
-- **ASN Lookup**: `AS13335`, `AS15169`, `AS8075`
+```
+RustWho/
+├── .env
+├── .env.example
+├── .gitattributes
+├── .gitignore
+├── Cargo.lock
+├── Cargo.toml (Workspace configuration)
+├── Dockerfile (Multi-stage build)
+├── LICENSE
+├── README.md
+├── docker-compose.yml
+├── backend/
+│   ├── Cargo.toml (Axum backend metadata)
+│   └── src/
+│       └── main.rs (Server logic & TCP query resolution)
+└── frontend/
+    ├── Cargo.toml (Yew dependencies)
+    ├── index.html (WASM compilation entry)
+    ├── Assets/
+    │   ├── login.css (PIN layout styling)
+    │   ├── styles.css (Variable themes & print stylesheets)
+    │   ├── service-worker.js (Offline PWA caching)
+    │   └── assets/
+    │       ├── logo.png (Red branding icon)
+    │       └── logo.svg (Red vector markup)
+    └── src/
+        ├── main.rs (State management & lookup rendering)
+        ├── header.rs (Title, language & theme controller)
+        ├── i18n.rs (Multi-language translations database)
+        ├── storage.rs (LocalStorage interface wrapper)
+        └── types.rs (Global definitions)
+```
 
-## Rate Limits
+---
 
-Please note that some APIs used have rate limits:
-- WHOIS: No rate limits (uses direct protocol)
-- ipapi.co: 1000 requests per day (free tier)
-- ip-api.com: 45 requests per minute
-- ipwho.is: No rate limits
-- RIPEstat: No strict rate limits (fair use policy)
-- PeeringDB: No strict rate limits (fair use policy)
+## 🛡️ License
 
-The application automatically handles rate limits by falling back to alternative services when needed.
-
-## Support the Project
-
-<a href="https://www.buymeacoffee.com/dumbware" target="_blank">
-  <img src="https://cdn.buymeacoffee.com/buttons/v2/default-yellow.png" alt="Buy Me A Coffee" height="60">
-</a>
-
-## Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
+Distributed under the MIT License. See [LICENSE](LICENSE) for more details.

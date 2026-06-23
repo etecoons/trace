@@ -1,0 +1,17 @@
+target/
+frontend/dist/
+frontend/target/
+.git/
+.github/
+.idea/
+.vscode/
+node_modules/
+package-lock.json
+package.json
+nodemon.json
+server.js
+scripts/
+public/
+docker-compose.yml
+.env
+.env.example

@@ -1,0 +1,17 @@
+[workspace]
+resolver = "2"
+members = [
+    "backend",
+    "frontend"
+]
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+panic = "abort"
+
+# Specific override for the WASM frontend to minimize bundle size
+[profile.release.package.frontend]
+opt-level = "z"
+strip = true

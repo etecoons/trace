@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en" class="dark" data-theme="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{SITE_TITLE}}</title>
+    
+    <!-- Google Fonts for premium typography -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    
+    <script>
+        // Prevent theme flicker by setting theme immediately
+        (function() {
+            let theme = localStorage.getItem('theme') || 'dark';
+            if (theme.startsWith('"') && theme.endsWith('"')) {
+                theme = theme.slice(1, -1);
+            }
+            document.documentElement.className = theme;
+            document.documentElement.setAttribute('data-theme', theme);
+        })();
+    </script>
+
+    <!-- Trunk resources -->
+    <link data-trunk rel="css" href="Assets/styles.css" />
+    <link data-trunk rel="css" href="Assets/login.css" />
+    <link data-trunk rel="copy-dir" href="Assets/assets" />
+    <link data-trunk rel="copy-file" href="Assets/service-worker.js" />
+    
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/svg+xml" href="assets/logo.svg">
+</head>
+<body>
+    <div id="app"></div>
+    <script>
+        // Register PWA Service Worker
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("/service-worker.js")
+                .then((reg) => console.log("Service Worker registered:", reg.scope))
+                .catch((err) => console.log("Service Worker registration failed:", err));
+        }
+    </script>
+</body>
+</html>
