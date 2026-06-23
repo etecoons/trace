@@ -1,5 +1,6 @@
 # Stage 1: Build the Frontend (Yew WebAssembly)
 FROM rust:1.96-slim as frontend-builder
+ARG TARGETARCH
 WORKDIR /usr/src/app
 
 # Install compilation dependencies and Trunk binary
@@ -8,7 +9,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     rm -rf /var/lib/apt/lists/*
 
 RUN rustup target add wasm32-unknown-unknown
-RUN wget -qO- "https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-x86_64-unknown-linux-gnu.tar.gz" | tar -xzf- -C /usr/local/bin
+RUN if [ "$TARGETARCH" = "arm64" ]; then TRUNK_ARCH="aarch64"; else TRUNK_ARCH="x86_64"; fi && \
+    wget -qO- "https://github.com/trunk-rs/trunk/releases/download/v0.21.14/trunk-${TRUNK_ARCH}-unknown-linux-gnu.tar.gz" | tar -xzf- -C /usr/local/bin
 
 COPY Cargo.toml Cargo.lock ./
 COPY backend/ ./backend/
