@@ -11,7 +11,7 @@ mod ru;
 mod zh;
 
 #[allow(dead_code)]
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, PartialEq)]
 pub struct Translations {
 
     pub placeholder: &'static str,
