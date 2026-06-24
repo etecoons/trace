@@ -65,3 +65,60 @@ Configure these settings inside your Docker Compose environment or container env
 | `ALLOWED_ORIGINS` | Comma-separated list of allowed HTTP request origins (CORS filter). Use `*` to allow all origins. | `*` |
 | `RUSTWHO_PIN` | Optional 4–10 digit PIN (numerical only) to lock access to the interface. Leave empty for public mode. | None |
 | `TZ` | Timezone for the container processes and logs. | `UTC` |
+
+## 📂 Repository Structure
+
+```
+.
+├── backend/
+│   ├── Cargo.toml
+│   └── src
+│       ├── asn.rs
+│       ├── asn_types.rs
+│       ├── auth.rs
+│       ├── config.rs
+│       ├── dns.rs
+│       ├── handlers.rs
+│       ├── ip.rs
+│       ├── main.rs
+│       ├── query.rs
+│       ├── state.rs
+│       ├── utils.rs
+│       └── whois.rs
+└── frontend/
+    ├── Assets
+    │   ├── assets
+    │   │   ├── logo.png
+    │   │   └── logo.svg
+    │   ├── login.css
+    │   ├── service-worker.js
+    │   └── styles.css
+    ├── Cargo.toml
+    ├── index.html
+    └── src
+        ├── api.rs
+        ├── app.rs
+        ├── app_update.rs
+        ├── app_view.rs
+        ├── components
+        │   ├── mod.rs
+        │   ├── pin_entry.rs
+        │   ├── result_asn.rs
+        │   ├── result_ip.rs
+        │   └── result_whois.rs
+        ├── header.rs
+        ├── i18n
+        │   ├── de.rs
+        │   ├── en.rs
+        │   ├── es.rs
+        │   ├── fr.rs
+        │   ├── ja.rs
+        │   ├── mod.rs
+        │   ├── pt.rs
+        │   ├── ru.rs
+        │   └── zh.rs
+        ├── main.rs
+        ├── storage.rs
+        ├── types.rs
+        └── utils.rs
+```
