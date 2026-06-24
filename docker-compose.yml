@@ -13,3 +13,5 @@ services:
       BASE_URL: ${BASE_URL:-http://localhost:4404}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
       TZ: ${TZ:-UTC}
+      ENABLE_TRANSLATION: ${ENABLE_TRANSLATION:-false}
+      MAX_ATTEMPTS: ${MAX_ATTEMPTS:-5}
