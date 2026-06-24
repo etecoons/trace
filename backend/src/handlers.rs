@@ -1,19 +1,19 @@
+use crate::asn::fetch_asn_data;
+use crate::ip::try_ip_lookup;
+use crate::query::detect_query_type;
+use crate::state::AppState;
+use crate::whois::{parse_whois_data, whois_lookup};
 use axum::{
+    Json,
     extract::{Path, State},
     http::StatusCode,
     response::{Html, IntoResponse},
-    Json,
 };
 use chrono::Utc;
 use std::fs;
 use std::path::Path as StdPath;
 use std::sync::LazyLock;
 use std::time::Instant;
-use crate::state::AppState;
-use crate::query::detect_query_type;
-use crate::whois::{whois_lookup, parse_whois_data};
-use crate::ip::try_ip_lookup;
-use crate::asn::fetch_asn_data;
 
 static START_TIME: LazyLock<Instant> = LazyLock::new(Instant::now);
 
@@ -58,7 +58,11 @@ pub fn generate_pwa_manifest(site_title: &str) {
             for entry in entries.flatten() {
                 let name = entry.file_name().to_string_lossy().to_string();
                 let full = entry.path();
-                let rel = if base.is_empty() { name.clone() } else { format!("{}/{}", base, name) };
+                let rel = if base.is_empty() {
+                    name.clone()
+                } else {
+                    format!("{}/{}", base, name)
+                };
                 if full.is_dir() {
                     walk_dir(&full, &rel, assets);
                 } else {
@@ -69,7 +73,10 @@ pub fn generate_pwa_manifest(site_title: &str) {
     }
     walk_dir(dist_dir, "", &mut assets);
 
-    let _ = fs::write(dist_dir.join("asset-manifest.json"), serde_json::to_string_pretty(&assets).unwrap_or_default());
+    let _ = fs::write(
+        dist_dir.join("asset-manifest.json"),
+        serde_json::to_string_pretty(&assets).unwrap_or_default(),
+    );
 
     let pwa_manifest = serde_json::json!({
         "name": site_title,
@@ -86,7 +93,10 @@ pub fn generate_pwa_manifest(site_title: &str) {
         "orientation": "any"
     });
 
-    let _ = fs::write(dist_dir.join("manifest.json"), serde_json::to_string_pretty(&pwa_manifest).unwrap_or_default());
+    let _ = fs::write(
+        dist_dir.join("manifest.json"),
+        serde_json::to_string_pretty(&pwa_manifest).unwrap_or_default(),
+    );
 }
 
 pub async fn handle_lookup(

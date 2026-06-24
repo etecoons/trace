@@ -82,7 +82,10 @@ struct IpWhoIsConnection {
     org: Option<String>,
 }
 
-pub async fn try_ip_lookup(client: &reqwest::Client, ip: &str) -> Result<GeolocationResponse, String> {
+pub async fn try_ip_lookup(
+    client: &reqwest::Client,
+    ip: &str,
+) -> Result<GeolocationResponse, String> {
     let clean_ip = ip
         .replace(['[', ']'], "")
         .split('/')
@@ -119,7 +122,11 @@ pub async fn try_ip_lookup(client: &reqwest::Client, ip: &str) -> Result<Geoloca
     {
         Ok(res) => {
             if let Ok(data) = res.json::<IpApiComResponse>().await {
-                let version = if data.query.contains(':') { "IPv6" } else { "IPv4" };
+                let version = if data.query.contains(':') {
+                    "IPv6"
+                } else {
+                    "IPv4"
+                };
                 return Ok(GeolocationResponse {
                     ip: data.query,
                     version: version.to_string(),

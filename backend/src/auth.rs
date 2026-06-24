@@ -1,14 +1,14 @@
+use crate::state::AppState;
+use crate::utils::{get_client_ip, hash_pin, safe_compare};
 use axum::{
+    Json,
     extract::{ConnectInfo, State},
-    http::{header, HeaderMap, StatusCode},
+    http::{HeaderMap, StatusCode, header},
     middleware::Next,
     response::{IntoResponse, Response},
-    Json,
 };
 use std::net::SocketAddr;
 use std::time::Duration;
-use crate::state::AppState;
-use crate::utils::{get_client_ip, hash_pin, safe_compare};
 
 pub const COOKIE_NAME: &str = "RUSTWHO_PIN";
 
@@ -17,7 +17,7 @@ pub fn is_authenticated(headers: &HeaderMap, state: &AppState) -> bool {
         Some(p) => p,
         None => return true,
     };
-    
+
     let cookie_pin = headers
         .get(header::COOKIE)
         .and_then(|c| c.to_str().ok())
@@ -28,7 +28,7 @@ pub fn is_authenticated(headers: &HeaderMap, state: &AppState) -> bool {
                 .and_then(|s| s.split('=').nth(1))
                 .map(|s| s.trim().to_string())
         });
-        
+
     let header_pin = headers.get("x-pin").and_then(|h| h.to_str().ok());
 
     match (cookie_pin, header_pin) {
@@ -105,23 +105,26 @@ pub async fn origin_validation_middleware(
     }
 }
 
-pub async fn security_headers_middleware(
-    req: axum::extract::Request,
-    next: Next,
-) -> Response {
+pub async fn security_headers_middleware(req: axum::extract::Request, next: Next) -> Response {
     let mut response = next.run(req).await;
     let headers = response.headers_mut();
-    
+
     headers.insert("X-Frame-Options", header::HeaderValue::from_static("DENY"));
-    headers.insert("X-Content-Type-Options", header::HeaderValue::from_static("nosniff"));
-    headers.insert("Referrer-Policy", header::HeaderValue::from_static("strict-origin-when-cross-origin"));
+    headers.insert(
+        "X-Content-Type-Options",
+        header::HeaderValue::from_static("nosniff"),
+    );
+    headers.insert(
+        "Referrer-Policy",
+        header::HeaderValue::from_static("strict-origin-when-cross-origin"),
+    );
     headers.insert(
         "Content-Security-Policy", 
         header::HeaderValue::from_static(
             "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: blob: https:; connect-src 'self' ws: wss: http: https:; font-src 'self'; manifest-src 'self';"
         )
     );
-    
+
     response
 }
 
@@ -141,13 +144,20 @@ pub async fn verify_pin(
         return (StatusCode::OK, Json(serde_json::json!({ "success": true }))).into_response();
     }
 
-    let ip = get_client_ip(&headers, addr, state.config.trust_proxy, &state.config.trusted_proxies);
+    let ip = get_client_ip(
+        &headers,
+        addr,
+        state.config.trust_proxy,
+        &state.config.trusted_proxies,
+    );
 
     if state.is_locked_out(ip).await {
         let map = state.login_attempts.read().await;
         let last_time = map.get(&ip).map(|a| a.last_attempt).unwrap();
         let lockout_dur = Duration::from_secs(state.config.lockout_time_minutes * 60);
-        let time_left = lockout_dur.checked_sub(last_time.elapsed()).unwrap_or(Duration::ZERO);
+        let time_left = lockout_dur
+            .checked_sub(last_time.elapsed())
+            .unwrap_or(Duration::ZERO);
         let time_left_min = (time_left.as_secs_f64() / 60.0).ceil() as u64;
 
         return (
@@ -164,7 +174,11 @@ pub async fn verify_pin(
     let pin_str = payload.pin.as_deref().unwrap_or("").trim();
 
     if pin_str.is_empty() {
-        return (StatusCode::BAD_REQUEST, Json(serde_json::json!({ "success": false, "error": "PIN is required." }))).into_response();
+        return (
+            StatusCode::BAD_REQUEST,
+            Json(serde_json::json!({ "success": false, "error": "PIN is required." })),
+        )
+            .into_response();
     }
 
     if safe_compare(pin_str, expected_pin) {
@@ -185,8 +199,16 @@ pub async fn verify_pin(
         );
 
         let mut headers = HeaderMap::new();
-        headers.insert(header::SET_COOKIE, header::HeaderValue::from_str(&cookie_val).unwrap());
-        (StatusCode::OK, headers, Json(serde_json::json!({ "success": true }))).into_response()
+        headers.insert(
+            header::SET_COOKIE,
+            header::HeaderValue::from_str(&cookie_val).unwrap(),
+        );
+        (
+            StatusCode::OK,
+            headers,
+            Json(serde_json::json!({ "success": true })),
+        )
+            .into_response()
     } else {
         state.record_login_attempt(ip).await;
         let map = state.login_attempts.read().await;
@@ -209,9 +231,16 @@ pub async fn logout() -> impl IntoResponse {
     let mut headers = HeaderMap::new();
     headers.insert(
         header::SET_COOKIE,
-        header::HeaderValue::from_static("RUSTWHO_PIN=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0"),
+        header::HeaderValue::from_static(
+            "RUSTWHO_PIN=; Path=/; HttpOnly; SameSite=Strict; Max-Age=0",
+        ),
     );
-    (StatusCode::OK, headers, Json(serde_json::json!({ "success": true }))).into_response()
+    (
+        StatusCode::OK,
+        headers,
+        Json(serde_json::json!({ "success": true })),
+    )
+        .into_response()
 }
 
 pub async fn auth_check(headers: HeaderMap, State(state): State<AppState>) -> impl IntoResponse {
@@ -226,7 +255,12 @@ pub async fn pin_required(
     ConnectInfo(addr): ConnectInfo<SocketAddr>,
     State(state): State<AppState>,
 ) -> impl IntoResponse {
-    let ip = get_client_ip(&headers, addr, state.config.trust_proxy, &state.config.trusted_proxies);
+    let ip = get_client_ip(
+        &headers,
+        addr,
+        state.config.trust_proxy,
+        &state.config.trusted_proxies,
+    );
     Json(serde_json::json!({
         "required": state.config.pin.is_some(),
         "length": state.config.pin.as_ref().map(|p| p.len()).unwrap_or(0),

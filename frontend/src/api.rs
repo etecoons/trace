@@ -1,5 +1,5 @@
-use gloo_net::http::Request;
 use crate::types::LookupResponse;
+use gloo_net::http::Request;
 
 pub async fn fetch_lookup(query: &str) -> Result<LookupResponse, String> {
     let url = format!("/api/lookup/{}", query);

@@ -9,23 +9,36 @@ pub async fn fetch_asn_data(
         .parse()
         .map_err(|_| "Invalid ASN format".to_string())?;
 
-    let whois_url = format!("https://stat.ripe.net/data/whois/data.json?resource=AS{}", asn_clean);
-    let overview_url = format!("https://stat.ripe.net/data/as-overview/data.json?resource=AS{}", asn_clean);
+    let whois_url = format!(
+        "https://stat.ripe.net/data/whois/data.json?resource=AS{}",
+        asn_clean
+    );
+    let overview_url = format!(
+        "https://stat.ripe.net/data/as-overview/data.json?resource=AS{}",
+        asn_clean
+    );
     let peering_db_url = format!("https://www.peeringdb.com/api/net?asn={}", asn_clean);
 
     let whois_fut = client.get(&whois_url).send();
     let overview_fut = client.get(&overview_url).send();
     let peering_db_fut = client.get(&peering_db_url).send();
 
-    let (whois_res, overview_res, peering_db_res) = tokio::join!(whois_fut, overview_fut, peering_db_fut);
+    let (whois_res, overview_res, peering_db_res) =
+        tokio::join!(whois_fut, overview_fut, peering_db_fut);
 
     let whois_data: RipeStatWhoisResponse = match whois_res {
-        Ok(res) => res.json().await.unwrap_or(RipeStatWhoisResponse { data: None }),
+        Ok(res) => res
+            .json()
+            .await
+            .unwrap_or(RipeStatWhoisResponse { data: None }),
         Err(_) => RipeStatWhoisResponse { data: None },
     };
 
     let overview_data: RipeStatOverviewResponse = match overview_res {
-        Ok(res) => res.json().await.unwrap_or(RipeStatOverviewResponse { data: None }),
+        Ok(res) => res
+            .json()
+            .await
+            .unwrap_or(RipeStatOverviewResponse { data: None }),
         Err(_) => RipeStatOverviewResponse { data: None },
     };
 
@@ -50,7 +63,11 @@ pub async fn fetch_asn_data(
     let find_value = |key: &str| -> String {
         flat_records
             .iter()
-            .find(|r| r.key.as_ref().map_or(false, |k| k.to_lowercase() == key.to_lowercase()))
+            .find(|r| {
+                r.key
+                    .as_ref()
+                    .map_or(false, |k| k.to_lowercase() == key.to_lowercase())
+            })
             .and_then(|r| r.value.clone())
             .unwrap_or_default()
     };
@@ -59,22 +76,33 @@ pub async fn fetch_asn_data(
         flat_records
             .iter()
             .filter_map(|r| {
-                let matches = r.key.as_ref().map_or(false, |k| k.to_lowercase() == key.to_lowercase());
+                let matches = r
+                    .key
+                    .as_ref()
+                    .map_or(false, |k| k.to_lowercase() == key.to_lowercase());
                 if matches { r.value.clone() } else { None }
             })
             .collect()
     };
 
     let source = find_value("source");
-    let auth = whois_data.data.as_ref()
+    let auth = whois_data
+        .data
+        .as_ref()
         .and_then(|d| d.authorities.as_ref())
         .and_then(|a| a.first().cloned())
         .unwrap_or_default();
 
-    let source_upper = if !source.is_empty() { source.to_uppercase() } else { auth.to_uppercase() };
+    let source_upper = if !source.is_empty() {
+        source.to_uppercase()
+    } else {
+        auth.to_uppercase()
+    };
     let is_arin = source_upper == "ARIN";
 
-    let holder = overview_data.data.as_ref()
+    let holder = overview_data
+        .data
+        .as_ref()
         .and_then(|d| d.holder.clone())
         .unwrap_or_default();
     let holder_parts: Vec<&str> = holder.split(" - ").collect();
@@ -87,7 +115,11 @@ pub async fn fetch_asn_data(
             as_name
         } else {
             let as_name_caps = find_value("ASName");
-            if !as_name_caps.is_empty() { as_name_caps } else { find_value("aut-num") }
+            if !as_name_caps.is_empty() {
+                as_name_caps
+            } else {
+                find_value("aut-num")
+            }
         }
     };
 
@@ -120,7 +152,9 @@ pub async fn fetch_asn_data(
         let noc_email = find_all_values("OrgNOCEmail");
         email_contacts = tech_email;
         for email in noc_email {
-            if !email_contacts.contains(&email) { email_contacts.push(email); }
+            if !email_contacts.contains(&email) {
+                email_contacts.push(email);
+            }
         }
     }
     if email_contacts.is_empty() {
@@ -128,13 +162,19 @@ pub async fn fetch_asn_data(
         let admin_c = find_all_values("admin-c");
         email_contacts = tech_c;
         for c in admin_c {
-            if !email_contacts.contains(&c) { email_contacts.push(c); }
+            if !email_contacts.contains(&c) {
+                email_contacts.push(c);
+            }
         }
     }
 
     let mut abuse_contacts = find_all_values("abuse-mailbox");
-    if abuse_contacts.is_empty() { abuse_contacts = find_all_values("OrgAbuseEmail"); }
-    if abuse_contacts.is_empty() { abuse_contacts = find_all_values("abuse-c"); }
+    if abuse_contacts.is_empty() {
+        abuse_contacts = find_all_values("OrgAbuseEmail");
+    }
+    if abuse_contacts.is_empty() {
+        abuse_contacts = find_all_values("abuse-c");
+    }
 
     let remarks = find_all_values("remarks");
     let mut owner_address = find_all_values("address");
@@ -146,17 +186,33 @@ pub async fn fetch_asn_data(
         let country = find_value("Country");
 
         let mut addr_parts = Vec::new();
-        if !street.is_empty() { addr_parts.push(street); }
+        if !street.is_empty() {
+            addr_parts.push(street);
+        }
         let mut city_state_zip = Vec::new();
-        if !city.is_empty() { city_state_zip.push(city); }
-        if !state.is_empty() { city_state_zip.push(state); }
-        if !postal.is_empty() { city_state_zip.push(postal); }
-        if !city_state_zip.is_empty() { addr_parts.push(city_state_zip.join(", ")); }
-        if !country.is_empty() { addr_parts.push(country); }
+        if !city.is_empty() {
+            city_state_zip.push(city);
+        }
+        if !state.is_empty() {
+            city_state_zip.push(state);
+        }
+        if !postal.is_empty() {
+            city_state_zip.push(postal);
+        }
+        if !city_state_zip.is_empty() {
+            addr_parts.push(city_state_zip.join(", "));
+        }
+        if !country.is_empty() {
+            addr_parts.push(country);
+        }
         owner_address = addr_parts;
     }
     if owner_address.is_empty() {
-        owner_address = remarks.iter().filter(|r| !r.contains("http")).cloned().collect();
+        owner_address = remarks
+            .iter()
+            .filter(|r| !r.contains("http"))
+            .cloned()
+            .collect();
     }
 
     let rir_name = match source_upper.as_str() {
@@ -166,7 +222,13 @@ pub async fn fetch_asn_data(
         "LACNIC" => "LACNIC".to_string(),
         "AFRINIC" => "AFRINIC".to_string(),
         "RADB" => "RADB".to_string(),
-        _ => if !source_upper.is_empty() { source_upper } else { "Unknown".to_string() },
+        _ => {
+            if !source_upper.is_empty() {
+                source_upper
+            } else {
+                "Unknown".to_string()
+            }
+        }
     };
 
     let created = {
@@ -201,7 +263,13 @@ pub async fn fetch_asn_data(
 
     let website = peering_db_net
         .and_then(|net| net.website.clone())
-        .unwrap_or_else(|| remarks.iter().find(|r| r.contains("http")).cloned().unwrap_or_default());
+        .unwrap_or_else(|| {
+            remarks
+                .iter()
+                .find(|r| r.contains("http"))
+                .cloned()
+                .unwrap_or_default()
+        });
 
     let traffic_ratio = peering_db_net.and_then(|net| net.info_ratio.clone());
 
@@ -212,10 +280,17 @@ pub async fn fetch_asn_data(
             description_short: description,
             country_code,
             website,
-            abuse_contacts: if !abuse_contacts.is_empty() { abuse_contacts } else { email_contacts.clone() },
+            abuse_contacts: if !abuse_contacts.is_empty() {
+                abuse_contacts
+            } else {
+                email_contacts.clone()
+            },
             email_contacts,
             owner_address,
-            rir_allocation: RirAllocation { rir_name, date_allocated: created },
+            rir_allocation: RirAllocation {
+                rir_name,
+                date_allocated: created,
+            },
             traffic_ratio,
             date_updated: last_modified,
         },

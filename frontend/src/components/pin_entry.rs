@@ -1,5 +1,5 @@
-use yew::prelude::*;
 use crate::i18n::Translations;
+use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct PinProps {

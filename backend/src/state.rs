@@ -1,9 +1,9 @@
+use crate::config::AppConfig;
 use std::collections::HashMap;
 use std::net::IpAddr;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
-use crate::config::AppConfig;
 
 #[derive(Clone, Debug)]
 pub struct LoginAttempts {

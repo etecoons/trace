@@ -1,10 +1,10 @@
+use crate::dns::{IpAddresses, resolve_dns};
+use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 use std::sync::LazyLock;
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
-use serde::{Deserialize, Serialize};
-use crate::dns::{IpAddresses, resolve_dns};
 
 static RE_REFER: LazyLock<regex::Regex> = LazyLock::new(|| {
     regex::Regex::new(r"(?i)^\s*(refer|whois|whois\s+server|registrar\s+whois\s+server)\s*:\s*([a-z0-9\-\._]+)\s*$").unwrap()
@@ -15,7 +15,8 @@ static RE_IPV4: LazyLock<regex::Regex> = LazyLock::new(|| {
 });
 
 static RE_IPV6: LazyLock<regex::Regex> = LazyLock::new(|| {
-    regex::Regex::new(r"(?i)\b(?:[0-9a-f]{1,4}:){1,7}(?:[0-9a-f]{1,4}|:)|(?:::[0-9a-f]{1,4})\b").unwrap()
+    regex::Regex::new(r"(?i)\b(?:[0-9a-f]{1,4}:){1,7}(?:[0-9a-f]{1,4}|:)|(?:::[0-9a-f]{1,4})\b")
+        .unwrap()
 });
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -59,13 +60,19 @@ pub async fn whois_lookup(query: &str) -> Result<String, String> {
 }
 
 async fn query_whois_server(server: &str, query: &str) -> Result<String, String> {
-    let addr = if server.contains(':') { server.to_string() } else { format!("{}:43", server) };
+    let addr = if server.contains(':') {
+        server.to_string()
+    } else {
+        format!("{}:43", server)
+    };
     let mut stream = tokio::time::timeout(Duration::from_secs(5), TcpStream::connect(&addr))
         .await
         .map_err(|_| format!("Connection timeout to {}", server))?
         .map_err(|e| format!("Failed to connect to {}: {}", server, e))?;
 
-    stream.write_all(format!("{}\r\n", query).as_bytes()).await
+    stream
+        .write_all(format!("{}\r\n", query).as_bytes())
+        .await
         .map_err(|e| format!("Failed to write to socket: {}", e))?;
 
     let mut response = Vec::new();
@@ -81,7 +88,8 @@ async fn query_whois_server(server: &str, query: &str) -> Result<String, String>
         Ok(())
     };
 
-    tokio::time::timeout(Duration::from_secs(10), read_future).await
+    tokio::time::timeout(Duration::from_secs(10), read_future)
+        .await
         .map_err(|_| "Timeout reading from WHOIS server".to_string())??;
 
     Ok(String::from_utf8_lossy(&response).into_owned())
@@ -104,16 +112,24 @@ pub fn extract_ips_from_raw(raw_data: &str) -> IpAddresses {
     let mut v6 = Vec::new();
     for line in raw_data.lines() {
         let lower = line.to_lowercase();
-        if lower.contains("ip address") || lower.contains("a record") || lower.contains("aaaa record")
-            || lower.contains("addresses") || lower.contains("host") || lower.contains("dns")
+        if lower.contains("ip address")
+            || lower.contains("a record")
+            || lower.contains("aaaa record")
+            || lower.contains("addresses")
+            || lower.contains("host")
+            || lower.contains("dns")
         {
             for cap in RE_IPV4.find_iter(line) {
                 let ip = cap.as_str().to_string();
-                if !v4.contains(&ip) { v4.push(ip); }
+                if !v4.contains(&ip) {
+                    v4.push(ip);
+                }
             }
             for cap in RE_IPV6.find_iter(line) {
                 let ip = cap.as_str().to_string();
-                if !v6.contains(&ip) { v6.push(ip); }
+                if !v6.contains(&ip) {
+                    v6.push(ip);
+                }
             }
         }
     }
@@ -136,10 +152,14 @@ pub async fn parse_whois_data(raw_data: &str, domain: &str) -> ParsedWhoisData {
     let mut dns_ips = resolve_dns(domain).await;
     let raw_ips = extract_ips_from_raw(raw_data);
     for ip in raw_ips.v4 {
-        if !dns_ips.v4.contains(&ip) { dns_ips.v4.push(ip); }
+        if !dns_ips.v4.contains(&ip) {
+            dns_ips.v4.push(ip);
+        }
     }
     for ip in raw_ips.v6 {
-        if !dns_ips.v6.contains(&ip) { dns_ips.v6.push(ip); }
+        if !dns_ips.v6.contains(&ip) {
+            dns_ips.v6.push(ip);
+        }
     }
     result.ip_addresses = dns_ips;
 
@@ -155,7 +175,9 @@ fn parse_eu_whois(raw_data: &str, result: &mut ParsedWhoisData) {
     let mut current_section = String::new();
     for line in raw_data.lines() {
         let trimmed = line.trim();
-        if trimmed.is_empty() || trimmed.starts_with('%') { continue; }
+        if trimmed.is_empty() || trimmed.starts_with('%') {
+            continue;
+        }
         if let Some(stripped) = trimmed.strip_suffix(':') {
             current_section = stripped.to_lowercase();
             continue;
@@ -166,7 +188,10 @@ fn parse_eu_whois(raw_data: &str, result: &mut ParsedWhoisData) {
                 let (key, val) = (parts[0], parts[1]);
                 match current_section.as_str() {
                     "registrar" if key == "Name" => result.registrar = val.to_string(),
-                    "name servers" if !key.contains(':') && key != "Please visit www.eurid.eu for more info." => {
+                    "name servers"
+                        if !key.contains(':')
+                            && key != "Please visit www.eurid.eu for more info." =>
+                    {
                         result.nameservers.push(key.to_string());
                     }
                     "technical" if key == "Organisation" && result.registrar.is_empty() => {
@@ -174,7 +199,8 @@ fn parse_eu_whois(raw_data: &str, result: &mut ParsedWhoisData) {
                     }
                     _ => {}
                 }
-            } else if current_section == "name servers" && !trimmed.contains(':')
+            } else if current_section == "name servers"
+                && !trimmed.contains(':')
                 && trimmed != "Please visit www.eurid.eu for more info."
             {
                 result.nameservers.push(trimmed.to_string());
@@ -194,27 +220,48 @@ fn parse_eu_whois(raw_data: &str, result: &mut ParsedWhoisData) {
 fn parse_generic_whois(raw_data: &str, result: &mut ParsedWhoisData) {
     for line in raw_data.lines() {
         let parts: Vec<&str> = line.splitn(2, ':').map(|s| s.trim()).collect();
-        if parts.len() < 2 { continue; }
+        if parts.len() < 2 {
+            continue;
+        }
         let (key, val) = (parts[0], parts[1]);
-        if key.is_empty() || val.is_empty() { continue; }
+        if key.is_empty() || val.is_empty() {
+            continue;
+        }
         let key_lower = key.to_lowercase();
         if key_lower.contains("registrar") {
             result.registrar = val.to_string();
-        } else if key_lower.contains("creation") || key_lower.contains("created") || key_lower.contains("registered") {
-            if result.creation_date.is_empty() { result.creation_date = val.to_string(); }
+        } else if key_lower.contains("creation")
+            || key_lower.contains("created")
+            || key_lower.contains("registered")
+        {
+            if result.creation_date.is_empty() {
+                result.creation_date = val.to_string();
+            }
         } else if key_lower.contains("expir") {
-            if result.expiration_date.is_empty() { result.expiration_date = val.to_string(); }
+            if result.expiration_date.is_empty() {
+                result.expiration_date = val.to_string();
+            }
         } else if key_lower.contains("updated") || key_lower.contains("modified") {
-            if result.last_updated.is_empty() { result.last_updated = val.to_string(); }
+            if result.last_updated.is_empty() {
+                result.last_updated = val.to_string();
+            }
         } else if key_lower.contains("status") {
             for s in val.split([',', ';']) {
                 let ts = s.trim().to_string();
-                if !ts.is_empty() && !result.status.contains(&ts) { result.status.push(ts); }
+                if !ts.is_empty() && !result.status.contains(&ts) {
+                    result.status.push(ts);
+                }
             }
         } else if key_lower.contains("name server") || key_lower.contains("nameserver") {
-            let ns = val.split(|c: char| c.is_whitespace() || c == ',' || c == ';')
-                .next().unwrap_or("").trim().to_string();
-            if !ns.is_empty() && !result.nameservers.contains(&ns) { result.nameservers.push(ns); }
+            let ns = val
+                .split(|c: char| c.is_whitespace() || c == ',' || c == ';')
+                .next()
+                .unwrap_or("")
+                .trim()
+                .to_string();
+            if !ns.is_empty() && !result.nameservers.contains(&ns) {
+                result.nameservers.push(ns);
+            }
         }
     }
 }

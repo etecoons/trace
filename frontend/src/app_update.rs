@@ -1,17 +1,17 @@
-use yew::prelude::*;
-use gloo_net::http::Request;
-use crate::app::App;
-use crate::types::*;
 use crate::api::fetch_lookup;
-use crate::utils::{get_hash, get_query_param, scroll_to_element};
+use crate::app::App;
 use crate::i18n::{get_saved_language, get_translations, save_language};
 use crate::storage::StorageService;
+use crate::types::*;
+use crate::utils::{get_hash, get_query_param, scroll_to_element};
+use gloo_net::http::Request;
+use yew::prelude::*;
 
 impl App {
     pub fn create_app(ctx: &Context<Self>) -> Self {
         let language = get_saved_language();
         let theme = StorageService::get_item("theme", "crateria");
-        
+
         let link = ctx.link().clone();
         wasm_bindgen_futures::spawn_local(async move {
             if let Ok(resp) = Request::get("/config").send().await {
@@ -52,7 +52,8 @@ impl App {
             Msg::PerformLookup => {
                 let trimmed = self.query.trim().to_string();
                 if trimmed.is_empty() {
-                    ctx.link().send_message(Msg::ShowToast(tr.empty_query_toast.to_string(), true));
+                    ctx.link()
+                        .send_message(Msg::ShowToast(tr.empty_query_toast.to_string(), true));
                     return false;
                 }
                 self.loading = true;
@@ -80,12 +81,14 @@ impl App {
                 self.response = Some(*data);
                 self.status_text = tr.success_toast.to_string();
                 self.status_type = "success".to_string();
-                ctx.link().send_message(Msg::ShowToast(tr.success_toast.to_string(), false));
+                ctx.link()
+                    .send_message(Msg::ShowToast(tr.success_toast.to_string(), false));
 
                 if let Some(hash) = get_hash() {
                     gloo_timers::callback::Timeout::new(250, move || {
                         scroll_to_element(&hash);
-                    }).forget();
+                    })
+                    .forget();
                 }
                 true
             }
@@ -108,9 +111,15 @@ impl App {
                         }
                     }
                 }
-                self.pin_required = json.get("pinRequired").and_then(|v| v.as_bool()).unwrap_or(false);
-                self.pin_length = json.get("pinLength").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
-                self.enable_translation = json.get("enableTranslation").and_then(|v| v.as_bool())
+                self.pin_required = json
+                    .get("pinRequired")
+                    .and_then(|v| v.as_bool())
+                    .unwrap_or(false);
+                self.pin_length =
+                    json.get("pinLength").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+                self.enable_translation = json
+                    .get("enableTranslation")
+                    .and_then(|v| v.as_bool())
                     .or_else(|| json.get("enable_translation").and_then(|v| v.as_bool()))
                     .unwrap_or(false);
 
@@ -140,15 +149,31 @@ impl App {
                 let link = ctx.link().clone();
                 wasm_bindgen_futures::spawn_local(async move {
                     let body = serde_json::json!({ "pin": pin });
-                    match Request::post("/api/verify-pin").json(&body).unwrap().send().await {
-                        Ok(resp) if resp.status() == 200 => link.send_message(Msg::VerifyPinSuccess),
+                    match Request::post("/api/verify-pin")
+                        .json(&body)
+                        .unwrap()
+                        .send()
+                        .await
+                    {
+                        Ok(resp) if resp.status() == 200 => {
+                            link.send_message(Msg::VerifyPinSuccess)
+                        }
                         Ok(resp) => {
-                            let msg = resp.json::<serde_json::Value>().await
-                                .ok().and_then(|j| j.get("error").and_then(|v| v.as_str()).map(|s| s.to_string()))
+                            let msg = resp
+                                .json::<serde_json::Value>()
+                                .await
+                                .ok()
+                                .and_then(|j| {
+                                    j.get("error")
+                                        .and_then(|v| v.as_str())
+                                        .map(|s| s.to_string())
+                                })
                                 .unwrap_or_else(|| "Invalid PIN".to_string());
                             link.send_message(Msg::VerifyPinFailure(msg));
                         }
-                        Err(_) => link.send_message(Msg::VerifyPinFailure("Connection error".to_string())),
+                        Err(_) => {
+                            link.send_message(Msg::VerifyPinFailure("Connection error".to_string()))
+                        }
                     }
                 });
                 false
@@ -161,7 +186,9 @@ impl App {
             }
             Msg::VerifyPinFailure(err) => {
                 self.is_authenticated = false;
-                if !err.is_empty() { self.error_message = Some(err); }
+                if !err.is_empty() {
+                    self.error_message = Some(err);
+                }
                 true
             }
             Msg::Logout => {
@@ -210,11 +237,16 @@ impl App {
             Msg::ShowToast(message, is_error) => {
                 let id = self.next_toast_id;
                 self.next_toast_id += 1;
-                self.toasts.push(Toast { id, message, is_error });
+                self.toasts.push(Toast {
+                    id,
+                    message,
+                    is_error,
+                });
                 let link = ctx.link().clone();
                 gloo_timers::callback::Timeout::new(2000, move || {
                     link.send_message(Msg::DismissToast(id));
-                }).forget();
+                })
+                .forget();
                 true
             }
             Msg::DismissToast(id) => {

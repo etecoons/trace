@@ -1,7 +1,7 @@
-use yew::prelude::*;
-use crate::types::AsnData;
 use crate::i18n::Translations;
+use crate::types::AsnData;
 use crate::utils::format_date;
+use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct AsnProps {

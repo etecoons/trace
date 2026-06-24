@@ -1,24 +1,22 @@
-use axum::{
-    middleware,
-    routing::get,
-    Router,
-};
+#![allow(clippy::collapsible_if, clippy::unnecessary_map_or)]
+
+use axum::{Router, middleware, routing::get};
 use std::net::SocketAddr;
 use std::time::Duration;
 use tower_http::services::ServeDir;
 use tracing_subscriber::{layer::SubscriberExt, util::SubscriberInitExt};
 
-mod config;
-mod state;
-mod auth;
-mod handlers;
-mod query;
-mod dns;
-mod whois;
-mod ip;
 mod asn;
 mod asn_types;
+mod auth;
+mod config;
+mod dns;
+mod handlers;
+mod ip;
+mod query;
+mod state;
 mod utils;
+mod whois;
 
 use config::AppConfig;
 use state::AppState;
@@ -56,14 +54,8 @@ async fn main() {
         tower_http::cors::CorsLayer::permissive()
     } else {
         let mut cors = tower_http::cors::CorsLayer::new()
-            .allow_methods([
-                axum::http::Method::GET,
-                axum::http::Method::POST,
-            ])
-            .allow_headers([
-                axum::http::header::CONTENT_TYPE,
-                axum::http::header::COOKIE,
-            ]);
+            .allow_methods([axum::http::Method::GET, axum::http::Method::POST])
+            .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::COOKIE]);
         for origin in config.allowed_origins.split(',') {
             if let Ok(parsed) = origin.trim().parse::<axum::http::HeaderValue>() {
                 cors = cors.allow_origin(parsed);
@@ -75,18 +67,25 @@ async fn main() {
     let api_routes = Router::new()
         .route(
             "/lookup/:query",
-            get(handlers::handle_lookup)
-                .layer(middleware::from_fn_with_state(state.clone(), auth::require_pin)),
+            get(handlers::handle_lookup).layer(middleware::from_fn_with_state(
+                state.clone(),
+                auth::require_pin,
+            )),
         )
         .route("/verify-pin", axum::routing::post(auth::verify_pin))
         .route("/logout", axum::routing::post(auth::logout))
         .route(
             "/auth-check",
-            axum::routing::get(auth::auth_check)
-                .layer(middleware::from_fn_with_state(state.clone(), auth::require_pin)),
+            axum::routing::get(auth::auth_check).layer(middleware::from_fn_with_state(
+                state.clone(),
+                auth::require_pin,
+            )),
         )
         .route("/pin-required", axum::routing::get(auth::pin_required))
-        .layer(middleware::from_fn_with_state(state.clone(), auth::origin_validation_middleware));
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth::origin_validation_middleware,
+        ));
 
     let app = Router::new()
         .nest("/api", api_routes)

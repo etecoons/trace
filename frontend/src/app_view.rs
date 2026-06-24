@@ -1,12 +1,12 @@
-use yew::prelude::*;
 use crate::app::App;
-use crate::types::*;
-use crate::i18n::get_translations;
-use crate::header::Header;
 use crate::components::pin_entry::PinEntry;
-use crate::components::result_whois::ResultWhois;
-use crate::components::result_ip::ResultIp;
 use crate::components::result_asn::ResultAsn;
+use crate::components::result_ip::ResultIp;
+use crate::components::result_whois::ResultWhois;
+use crate::header::Header;
+use crate::i18n::get_translations;
+use crate::types::*;
+use yew::prelude::*;
 
 impl App {
     pub fn view_app(&self, ctx: &Context<Self>) -> Html {
@@ -17,7 +17,11 @@ impl App {
             Msg::UpdateQuery(input.value())
         });
         let on_keydown = ctx.link().callback(|e: KeyboardEvent| {
-            if e.key() == "Enter" { Msg::PerformLookup } else { Msg::Nothing }
+            if e.key() == "Enter" {
+                Msg::PerformLookup
+            } else {
+                Msg::Nothing
+            }
         });
 
         html! {

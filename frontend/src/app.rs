@@ -1,5 +1,5 @@
-use yew::prelude::*;
 use crate::types::*;
+use yew::prelude::*;
 
 pub struct App {
     pub query: String,

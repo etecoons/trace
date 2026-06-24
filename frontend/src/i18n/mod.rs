@@ -1,5 +1,5 @@
-use crate::types::Language;
 use crate::storage::StorageService;
+use crate::types::Language;
 
 mod de;
 mod en;
@@ -13,7 +13,6 @@ mod zh;
 #[allow(dead_code)]
 #[derive(Clone, Debug, PartialEq)]
 pub struct Translations {
-
     pub placeholder: &'static str,
     pub lookup: &'static str,
     pub examples: &'static str,
@@ -88,7 +87,6 @@ pub struct Translations {
     pub enter_pin: &'static str,
     pub locked_out: &'static str,
     pub invalid_pin: &'static str,
-
 }
 
 pub fn get_translations(lang: Language) -> Translations {

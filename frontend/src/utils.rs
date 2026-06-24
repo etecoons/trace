@@ -1,5 +1,5 @@
-use wasm_bindgen::JsCast;
 use crate::types::WhoisEntity;
+use wasm_bindgen::JsCast;
 
 pub fn get_registrar_fn(entity: &WhoisEntity) -> Option<String> {
     let arr = entity.vcard_array.as_array()?;

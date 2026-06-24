@@ -1,6 +1,6 @@
-use yew::prelude::*;
-use crate::types::IpData;
 use crate::i18n::Translations;
+use crate::types::IpData;
+use yew::prelude::*;
 
 #[derive(Properties, PartialEq)]
 pub struct IpProps {
