@@ -18,6 +18,7 @@ pub struct App {
     pub pin_length: usize,
     pub pin_input: String,
     pub error_message: Option<String>,
+    pub enable_translation: bool,
 }
 
 impl Component for App {

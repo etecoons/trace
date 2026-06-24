@@ -38,6 +38,7 @@ impl App {
             pin_length: 0,
             pin_input: String::new(),
             error_message: None,
+            enable_translation: false,
         }
     }
 
@@ -109,6 +110,9 @@ impl App {
                 }
                 self.pin_required = json.get("pinRequired").and_then(|v| v.as_bool()).unwrap_or(false);
                 self.pin_length = json.get("pinLength").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
+                self.enable_translation = json.get("enableTranslation").and_then(|v| v.as_bool())
+                    .or_else(|| json.get("enable_translation").and_then(|v| v.as_bool()))
+                    .unwrap_or(false);
 
                 if self.pin_required {
                     let link = ctx.link().clone();

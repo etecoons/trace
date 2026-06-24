@@ -36,6 +36,7 @@ impl App {
                     print_tooltip={tr.print_tooltip.to_string()}
                     disable_print={self.response.is_none()}
                     theme_toggle_tooltip={tr.toggle_theme.to_string()}
+                    enable_translation={self.enable_translation}
                 />
                 <div class="container">
                     if !self.is_authenticated {

@@ -10,6 +10,7 @@ pub struct AppConfig {
     pub trusted_proxies: Vec<ipnet::IpNet>,
     pub allowed_origins: String,
     pub base_url: String,
+    pub enable_translation: bool,
 }
 
 impl AppConfig {
@@ -79,6 +80,10 @@ impl AppConfig {
         let base_url = std::env::var("BASE_URL")
             .unwrap_or_else(|_| format!("http://localhost:{}", port));
 
+        let enable_translation = std::env::var("ENABLE_TRANSLATION")
+            .map(|v| v == "true" || v == "on")
+            .unwrap_or(false);
+
         Self {
             port,
             site_title,
@@ -90,6 +95,7 @@ impl AppConfig {
             trusted_proxies,
             allowed_origins,
             base_url,
+            enable_translation,
         }
     }
 }

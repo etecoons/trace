@@ -230,6 +230,7 @@ pub async fn pin_required(
     Json(serde_json::json!({
         "required": state.config.pin.is_some(),
         "length": state.config.pin.as_ref().map(|p| p.len()).unwrap_or(0),
-        "locked": state.is_locked_out(ip).await
+        "locked": state.is_locked_out(ip).await,
+        "enable_translation": state.config.enable_translation
     }))
 }

@@ -22,6 +22,8 @@ pub async fn serve_config(State(state): State<AppState>) -> impl IntoResponse {
         "siteTitle": state.config.site_title,
         "pinRequired": state.config.pin.is_some(),
         "pinLength": state.config.pin.as_ref().map_or(0, |p| p.len()),
+        "enableTranslation": state.config.enable_translation,
+        "enable_translation": state.config.enable_translation,
     }))
 }
 
