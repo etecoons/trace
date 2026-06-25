@@ -265,6 +265,8 @@ pub async fn pin_required(
         "required": state.config.pin.is_some(),
         "length": state.config.pin.as_ref().map(|p| p.len()).unwrap_or(0),
         "locked": state.is_locked_out(ip).await,
-        "enable_translation": state.config.enable_translation
+        "enable_translation": state.config.enable_translation,
+        "enable_themes": state.config.enable_themes,
+        "enable_print": state.config.enable_print,
     }))
 }

@@ -19,6 +19,8 @@ pub struct App {
     pub pin_input: String,
     pub error_message: Option<String>,
     pub enable_translation: bool,
+    pub enable_themes: bool,
+    pub enable_print: bool,
 }
 
 impl Component for App {

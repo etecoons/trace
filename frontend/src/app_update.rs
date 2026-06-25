@@ -39,6 +39,8 @@ impl App {
             pin_input: String::new(),
             error_message: None,
             enable_translation: false,
+            enable_themes: true,
+            enable_print: true,
         }
     }
 
@@ -122,6 +124,28 @@ impl App {
                     .and_then(|v| v.as_bool())
                     .or_else(|| json.get("enable_translation").and_then(|v| v.as_bool()))
                     .unwrap_or(false);
+                self.enable_themes = json
+                    .get("enableThemes")
+                    .and_then(|v| v.as_bool())
+                    .or_else(|| json.get("enable_themes").and_then(|v| v.as_bool()))
+                    .unwrap_or(true);
+                self.enable_print = json
+                    .get("enablePrint")
+                    .and_then(|v| v.as_bool())
+                    .or_else(|| json.get("enable_print").and_then(|v| v.as_bool()))
+                    .unwrap_or(true);
+
+                if !self.enable_themes {
+                    self.theme = "tourian".to_string();
+                    if let Some(window) = web_sys::window() {
+                        if let Some(doc) = window.document() {
+                            if let Some(html) = doc.document_element() {
+                                let _ = html.set_attribute("data-theme", "tourian");
+                                html.set_class_name("tourian");
+                            }
+                        }
+                    }
+                }
 
                 if self.pin_required {
                     let link = ctx.link().clone();

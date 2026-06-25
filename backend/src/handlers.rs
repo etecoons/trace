@@ -24,6 +24,10 @@ pub async fn serve_config(State(state): State<AppState>) -> impl IntoResponse {
         "pinLength": state.config.pin.as_ref().map_or(0, |p| p.len()),
         "enableTranslation": state.config.enable_translation,
         "enable_translation": state.config.enable_translation,
+        "enableThemes": state.config.enable_themes,
+        "enable_themes": state.config.enable_themes,
+        "enablePrint": state.config.enable_print,
+        "enable_print": state.config.enable_print,
     }))
 }
 
