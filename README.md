@@ -32,11 +32,18 @@ services:
     restart: unless-stopped
     ports:
       - 4404:4404
+    volumes:
+      - ./data:/app/data
     environment:
       - PORT=4404
       - SITE_TITLE=Trace
+      - BASE_URL=http://localhost:4404
       - ALLOWED_ORIGINS=*
       - TRACE_PIN=1234
+      - TZ=UTC
+      - ENABLE_TRANSLATION=false
+      - ENABLE_THEMES=true
+      - ENABLE_PRINT=true
 ```
 
 2. Run the container:
