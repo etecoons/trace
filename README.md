@@ -10,7 +10,7 @@ Trace is a clean, secure, and lightning-fast WHOIS, IP, and ASN lookup web utili
 
 ## 🐳 Container Installation
 
-### Option 1: Docker Compose (Recommended)
+
 
 1. Create a `docker-compose.yml` file:
 
@@ -38,18 +38,6 @@ docker compose up -d
 
 3. Open your browser and navigate to `http://localhost:4404`.
 
-### Option 2: Docker CLI
-
-Run the following command to start the container:
-
-```bash
-docker run -d \
-  --name trace \
-  --restart unless-stopped \
-  -p 4404:4404 \
-  -e TRACE_PIN=1234 \
-  ubermetroid/trace:latest
-```
 
 ---
 
@@ -70,64 +58,8 @@ Configure these settings inside your Docker Compose environment or container env
 | `ENABLE_PRINT` | Enable the print button in the navigation header (true/false). | `true` |
 | `MAX_ATTEMPTS` | Number of failed PIN attempts permitted before locking out the user client IP address. | `5` |
 
-## 📂 Repository Structure
-
-```
-.
-├── backend/
-│   ├── Cargo.toml
-│   └── src
-│       ├── asn.rs
-│       ├── asn_types.rs
-│       ├── auth.rs
-│       ├── config.rs
-│       ├── dns.rs
-│       ├── handlers.rs
-│       ├── ip.rs
-│       ├── main.rs
-│       ├── query.rs
-│       ├── state.rs
-│       ├── utils.rs
-│       └── whois.rs
-└── frontend/
-    ├── Assets
-    │   ├── assets
-    │   │   ├── logo.png
-    │   │   └── logo.svg
-    │   ├── login.css
-    │   ├── service-worker.js
-    │   └── styles.css
-    ├── Cargo.toml
-    ├── index.html
-    └── src
-        ├── api.rs
-        ├── app.rs
-        ├── app_update.rs
-        ├── app_view.rs
-        ├── components
-        │   ├── mod.rs
-        │   ├── pin_entry.rs
-        │   ├── result_asn.rs
-        │   ├── result_ip.rs
-        │   └── result_whois.rs
-        ├── header.rs
-        ├── i18n
-        │   ├── de.rs
-        │   ├── en.rs
-        │   ├── es.rs
-        │   ├── fr.rs
-        │   ├── ja.rs
-        │   ├── mod.rs
-        │   ├── pt.rs
-        │   ├── ru.rs
-        │   └── zh.rs
-        ├── main.rs
-        ├── storage.rs
-        ├── types.rs
-        └── utils.rs
-```
 
 
 ---
 
-*Note: This repository was forked from [RustWho](https://github.com/UberMetroid/RustWho).*
+*Note: This repository was forked from [DumbWhois](https://github.com/DumbWareio/DumbWhois).*
