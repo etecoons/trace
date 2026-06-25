@@ -23,37 +23,49 @@ use state::AppState;
 
 #[tokio::main]
 async fn main() {
-    let log_dir = std::env::var("LOG_DIR").ok();
+    let log_dir = std::env::var("LOG_DIR").ok().or_else(|| {
+        let data_dir = std::path::Path::new("/app/data");
+        if data_dir.is_dir() {
+            Some("/app/data/log".to_string())
+        } else {
+            Some("/app/log".to_string())
+        }
+    });
+
     let (file_layer_error, file_layer_app) = if let Some(ref dir) = log_dir {
-        let _ = std::fs::create_dir_all(dir);
-        let error_file = std::fs::OpenOptions::new()
-            .create(true)
-            .write(true)
-            .append(true)
-            .open(std::path::Path::new(dir).join("error.log"))
-            .ok();
-        let app_file = std::fs::OpenOptions::new()
-            .create(true)
-            .write(true)
-            .append(true)
-            .open(std::path::Path::new(dir).join("app.log"))
-            .ok();
+        if dir == "off" || dir == "none" || dir == "false" {
+            (None, None)
+        } else {
+            let _ = std::fs::create_dir_all(dir);
+            let error_file = std::fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .append(true)
+                .open(std::path::Path::new(dir).join("error.log"))
+                .ok();
+            let app_file = std::fs::OpenOptions::new()
+                .create(true)
+                .write(true)
+                .append(true)
+                .open(std::path::Path::new(dir).join("app.log"))
+                .ok();
 
-        let error_layer = error_file.map(|file| {
-            tracing_subscriber::fmt::layer()
-                .with_writer(std::sync::Mutex::new(file))
-                .with_ansi(false)
-                .with_filter(tracing_subscriber::filter::LevelFilter::WARN)
-        });
+            let error_layer = error_file.map(|file| {
+                tracing_subscriber::fmt::layer()
+                    .with_writer(std::sync::Mutex::new(file))
+                    .with_ansi(false)
+                    .with_filter(tracing_subscriber::filter::LevelFilter::WARN)
+            });
 
-        let app_layer = app_file.map(|file| {
-            tracing_subscriber::fmt::layer()
-                .with_writer(std::sync::Mutex::new(file))
-                .with_ansi(false)
-                .with_filter(tracing_subscriber::filter::LevelFilter::INFO)
-        });
+            let app_layer = app_file.map(|file| {
+                tracing_subscriber::fmt::layer()
+                    .with_writer(std::sync::Mutex::new(file))
+                    .with_ansi(false)
+                    .with_filter(tracing_subscriber::filter::LevelFilter::INFO)
+            });
 
-        (error_layer, app_layer)
+            (error_layer, app_layer)
+        }
     } else {
         (None, None)
     };
