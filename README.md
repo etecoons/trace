@@ -8,6 +8,15 @@ Trace is a clean, secure, and lightning-fast WHOIS, IP, and ASN lookup web utili
 
 ---
 
+## 📦 Container Registry
+
+The Docker image is published to the following registries:
+
+*   **Docker Hub (Recommended)**: [ubermetroid/trace](https://hub.docker.com/r/ubermetroid/trace)
+*   **GitHub Container Registry (GHCR)**: [ghcr.io/ubermetroid/trace](https://github.com/UberMetroid/trace/pkgs/container/trace)
+
+---
+
 ## 🐳 Container Installation
 
 
