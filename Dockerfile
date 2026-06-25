@@ -34,6 +34,7 @@ RUN apk add --no-cache ca-certificates wget libc6-compat
 
 ENV PORT=4404
 ENV NODE_ENV=production
+ENV LOG_DIR=/app/log
 
 COPY --from=backend-builder /app/target/release/backend ./rustwho
 COPY --from=frontend-builder /app/frontend/dist ./frontend/dist
