@@ -5,6 +5,7 @@ on:
     branches:
       - main
       - dev
+      - nix
   workflow_dispatch:
 
 env:
@@ -19,6 +20,7 @@ jobs:
       contents: read
       packages: write
       actions: write
+      id-token: write
     env:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
@@ -29,12 +31,13 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Install Nix
+        uses: cachix/install-nix-action@v30
         with:
-          driver-opts: |
-            image=moby/buildkit:latest
-            network=host
+          github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build Docker Image with Nix
+        run: nix build .#dockerImage
 
       - name: Log in to Docker Hub
         if: ${{ env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != '' }}
@@ -70,6 +73,8 @@ jobs:
             GHCR_TAGS="${GHCR_TAGS},${LOWER_IMAGE_NAME_GHCR}:latest"
           elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
             GHCR_TAGS="${GHCR_TAGS},${LOWER_IMAGE_NAME_GHCR}:dev"
+          elif [ "${{ github.ref }}" = "refs/heads/nix" ]; then
+            GHCR_TAGS="${GHCR_TAGS},${LOWER_IMAGE_NAME_GHCR}:nix"
           fi
           
           # Initialize Docker Hub tags (if credentials exist)
@@ -80,6 +85,8 @@ jobs:
               DOCKER_TAGS="${DOCKER_TAGS},${LOWER_IMAGE_NAME_DOCKER}:latest"
             elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
               DOCKER_TAGS="${DOCKER_TAGS},${LOWER_IMAGE_NAME_DOCKER}:dev"
+            elif [ "${{ github.ref }}" = "refs/heads/nix" ]; then
+              DOCKER_TAGS="${DOCKER_TAGS},${LOWER_IMAGE_NAME_DOCKER}:nix"
             fi
           fi
           
@@ -88,29 +95,23 @@ jobs:
           echo "Generated GHCR tags: ${GHCR_TAGS}"
           echo "Generated Docker Hub tags: ${DOCKER_TAGS}"
 
-      - name: Build and Push to Docker Hub
-        if: ${{ env.DOCKER_USERNAME != '' }}
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          platforms: ${{ env.PLATFORMS }}
-          push: true
-          tags: ${{ steps.meta.outputs.DOCKER_TAGS }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
+      - name: Load image into Docker
+        run: |
+          docker load < result
 
-      - name: Build and Push to GHCR
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          platforms: ${{ env.PLATFORMS }}
-          push: true
-          tags: ${{ steps.meta.outputs.GHCR_TAGS }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-          provenance: false
-          build-args: |
-            BUILDKIT_INLINE_CACHE=1
+      - name: Push to GHCR
+        run: |
+          IFS=',' read -ra GH_TAGS <<< "${{ steps.meta.outputs.GHCR_TAGS }}"
+          for tag in "${GH_TAGS[@]}"; do
+            docker tag trace-nix:latest "$tag"
+            docker push "$tag"
+          done
+
+      - name: Push to Docker Hub
+        if: ${{ env.DOCKER_USERNAME != '' }}
+        run: |
+          IFS=',' read -ra DH_TAGS <<< "${{ steps.meta.outputs.DOCKER_TAGS }}"
+          for tag in "${DH_TAGS[@]}"; do
+            docker tag trace-nix:latest "$tag"
+            docker push "$tag"
+          done
