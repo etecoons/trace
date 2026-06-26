@@ -27,3 +27,7 @@ local_uploads/
 # OS specific files
 .DS_Store
 Thumbs.db
+
+# Nix build artifacts
+result
+result-*
