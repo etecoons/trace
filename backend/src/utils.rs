@@ -12,6 +12,7 @@ pub fn safe_compare(a: &str, b: &str) -> bool {
     result == 0
 }
 
+#[allow(dead_code)]
 pub fn hash_pin(pin: &str) -> String {
     use sha2::{Digest, Sha256};
     let mut hasher = Sha256::new();

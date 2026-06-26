@@ -96,6 +96,7 @@ async fn main() {
         loop {
             tokio::time::sleep(Duration::from_secs(60)).await;
             state_clone.clean_old_lockouts().await;
+            state_clone.clean_old_rate_limits().await;
         }
     });
 
@@ -131,6 +132,10 @@ async fn main() {
             )),
         )
         .route("/pin-required", axum::routing::get(auth::pin_required))
+        .layer(middleware::from_fn_with_state(
+            state.clone(),
+            auth::rate_limit_middleware,
+        ))
         .layer(middleware::from_fn_with_state(
             state.clone(),
             auth::origin_validation_middleware,
