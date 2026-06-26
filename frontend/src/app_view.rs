@@ -14,6 +14,7 @@ impl App {
         let show_version = self.show_version;
         let show_github = self.show_github;
         let version = env!("CARGO_PKG_VERSION").to_string();
+        let version_url = format!("https://github.com/UberMetroid/trace/releases/tag/v{}", version);
 
         let on_input = ctx.link().callback(|e: InputEvent| {
             let input: web_sys::HtmlInputElement = e.target_unchecked_into();
@@ -118,7 +119,7 @@ impl App {
                         </div>
                     }
                 </div>
-                <crate::footer::Footer {show_version} {version} {show_github}>
+                <crate::footer::Footer {show_version} {version} {show_github} {version_url}>
                     <div class={classes!("footer-status-text", self.status_type.clone())}>
                         {&self.status_text}
                     </div>
