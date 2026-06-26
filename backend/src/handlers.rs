@@ -91,8 +91,9 @@ pub fn generate_pwa_manifest(site_title: &str) {
         "background_color": "#ffffff",
         "theme_color": "#000000",
         "icons": [
-            { "src": "/assets/logo.png", "type": "image/png", "sizes": "192x192" },
-            { "src": "/assets/logo.png", "type": "image/png", "sizes": "512x512" }
+            { "src": "favicon.svg", "type": "image/svg+xml", "sizes": "any" },
+            { "src": "favicon.png", "type": "image/png", "sizes": "192x192" },
+            { "src": "favicon.png", "type": "image/png", "sizes": "512x512" }
         ],
         "orientation": "any"
     });
