@@ -1,3 +1,6 @@
+pub mod update;
+pub mod view;
+
 use crate::types::*;
 use yew::prelude::*;
 

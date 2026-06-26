@@ -2,8 +2,6 @@
 
 mod api;
 mod app;
-mod app_update;
-mod app_view;
 mod components;
 mod header;
 mod footer;
