@@ -1,7 +1,0 @@
-trace (2.1.1-1) stable; urgency=medium
-
-  * Initial Debian package release for Trace WHOIS APP_TITLE_PLACEHOLDER IP lookup.
-  * Built with cargo-deb from Nix flake outputs.
-
- -- UberMetroid <admin@ubermetroid.com>  Fri, 26 Jun 2026 13:51:55 -1000
-

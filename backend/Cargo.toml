@@ -25,25 +25,3 @@ regex = "1.10"
 sha2 = "0.11"
 ipnet = "2.9"
 
-[package.metadata.deb]
-name = "trace"
-changelog = "debian/changelog"
-copyright = "2026 UberMetroid <admin@ubermetroid.com>"
-maintainer = "UberMetroid <admin@ubermetroid.com>"
-extended-description = """\
-Trace is a high-performance, self-hosted WHOIS, IP, and ASN lookup utility \
-built in Rust. It performs deep WHOIS queries over raw TCP sockets with \
-PeeringDB ASN detail fallbacks."""
-depends = "$auto, libc6, ca-certificates"
-section = "utils"
-priority = "optional"
-maintainer-scripts = "debian"
-assets = [
-    ["target/release/backend", "usr/bin/trace", "755"],
-    ["../README.md", "usr/share/doc/trace/README.md", "644"],
-]
-systemd-units = {}
-
-[package.metadata.generate-rpm]
-name = "trace"
-
