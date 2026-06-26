@@ -1,0 +1,3 @@
+[submodule "frontend/Assets/shared-assets"]
+	path = frontend/Assets/shared-assets
+	url = git@github.com:UberMetroid/shared-assets.git
