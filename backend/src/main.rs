@@ -115,7 +115,7 @@ async fn main() {
 
     let api_routes = Router::new()
         .route(
-            "/lookup/:query",
+            "/lookup/{query}",
             get(handlers::handle_lookup).layer(middleware::from_fn_with_state(
                 state.clone(),
                 auth::require_pin,
