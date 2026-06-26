@@ -144,6 +144,7 @@ async fn main() {
         .route("/index.html", get(handlers::serve_index))
         .fallback_service(ServeDir::new("frontend/dist"))
         .layer(middleware::from_fn(auth::security_headers_middleware))
+        .layer(tower_http::trace::TraceLayer::new_for_http())
         .layer(cors)
         .with_state(state);
 
