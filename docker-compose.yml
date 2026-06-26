@@ -6,12 +6,16 @@ services:
     restart: unless-stopped
     ports:
       - ${PORT:-4404}:4404
+    volumes:
+      - ${TRACE_DATA_PATH:-./data}:/app/data
     environment:
       PORT: 4404
-      SITE_TITLE: ${SITE_TITLE:-Trace}
+      SITE_TITLE: ${TRACE_SITE_TITLE:-Trace}
       TRACE_PIN: ${TRACE_PIN:-}
-      BASE_URL: ${BASE_URL:-http://localhost:4404}
-      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-*}
+      BASE_URL: ${TRACE_BASE_URL:-http://localhost:4404}
+      ALLOWED_ORIGINS: ${TRACE_ALLOWED_ORIGINS:-*}
       TZ: ${TZ:-UTC}
       ENABLE_TRANSLATION: ${ENABLE_TRANSLATION:-false}
+      ENABLE_THEMES: ${ENABLE_THEMES:-true}
+      ENABLE_PRINT: ${ENABLE_PRINT:-true}
       MAX_ATTEMPTS: ${MAX_ATTEMPTS:-5}
