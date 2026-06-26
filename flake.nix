@@ -64,12 +64,13 @@
           doCheck = false;
 
           buildPhase = ''
-            cargo build --release --bin backend
+            cargo build --release --bin backend --bin sh
           '';
 
           installPhase = ''
             mkdir -p $out/bin
             cp target/release/backend $out/bin/backend
+            cp target/release/sh $out/bin/sh
           '';
         };
 
@@ -95,7 +96,10 @@
           extraCommands = ''
             mkdir -p app/frontend
             cp -r ${frontend}/dist app/frontend/dist
-          '';
+                      mkdir -p bin
+            cp ${backend}/bin/sh bin/sh
+            cp ${backend}/bin/sh bin/bash
+'';
         };
 
       in {
