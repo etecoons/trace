@@ -9,8 +9,7 @@ on:
   workflow_dispatch:
 
 env:
-  REGISTRY: ghcr.io
-  IMAGE_NAME: ${{ github.repository }}
+  IMAGE_NAME: ubermetroid/trace
   PLATFORMS: linux/amd64
 
 jobs:
@@ -24,6 +23,9 @@ jobs:
     env:
       DOCKER_USERNAME: ${{ secrets.DOCKER_USERNAME }}
       DOCKER_PASSWORD: ${{ secrets.DOCKER_PASSWORD }}
+
+    # Skip if no Docker Hub credentials are configured
+    if: ${{ env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != '' }}
 
     steps:
       - name: Checkout code
@@ -41,18 +43,10 @@ jobs:
         run: nix build .#dockerImage
 
       - name: Log in to Docker Hub
-        if: ${{ env.DOCKER_USERNAME != '' && env.DOCKER_PASSWORD != '' }}
         uses: docker/login-action@v3
         with:
           username: ${{ env.DOCKER_USERNAME }}
           password: ${{ env.DOCKER_PASSWORD }}
-
-      - name: Log in to GHCR
-        uses: docker/login-action@v3
-        with:
-          registry: ${{ env.REGISTRY }}
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Extract version from backend/Cargo.toml
         id: package_version
@@ -61,55 +55,29 @@ jobs:
           echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
           echo "Extracted version: $VERSION"
 
-      - name: Generate Docker Metadata
+      - name: Generate Docker Tags
         id: meta
         run: |
-          LOWER_IMAGE_NAME_GHCR=$(echo "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
-          LOWER_IMAGE_NAME_DOCKER=$(echo "ubermetroid/trace" | tr '[:upper:]' '[:lower:]')
           VERSION=${{ steps.package_version.outputs.VERSION }}
+          LOWER_IMAGE_NAME=$(echo "${{ env.IMAGE_NAME }}" | tr '[:upper:]' '[:lower:]')
           
-          # Initialize GHCR tags
-          GHCR_TAGS="${LOWER_IMAGE_NAME_GHCR}:${VERSION}"
+          DOCKER_TAGS="${LOWER_IMAGE_NAME}:${VERSION}"
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            GHCR_TAGS="${GHCR_TAGS},${LOWER_IMAGE_NAME_GHCR}:latest"
+            DOCKER_TAGS="${DOCKER_TAGS},${LOWER_IMAGE_NAME}:latest"
           elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
-            GHCR_TAGS="${GHCR_TAGS},${LOWER_IMAGE_NAME_GHCR}:dev"
+            DOCKER_TAGS="${DOCKER_TAGS},${LOWER_IMAGE_NAME}:dev"
           elif [ "${{ github.ref }}" = "refs/heads/nix" ]; then
-            GHCR_TAGS="${GHCR_TAGS},${LOWER_IMAGE_NAME_GHCR}:nix"
+            DOCKER_TAGS="${DOCKER_TAGS},${LOWER_IMAGE_NAME}:nix"
           fi
           
-          # Initialize Docker Hub tags (if credentials exist)
-          DOCKER_TAGS=""
-          if [ "${{ secrets.DOCKER_USERNAME }}" != "" ]; then
-            DOCKER_TAGS="${LOWER_IMAGE_NAME_DOCKER}:${VERSION}"
-            if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-              DOCKER_TAGS="${DOCKER_TAGS},${LOWER_IMAGE_NAME_DOCKER}:latest"
-            elif [ "${{ github.ref }}" = "refs/heads/dev" ]; then
-              DOCKER_TAGS="${DOCKER_TAGS},${LOWER_IMAGE_NAME_DOCKER}:dev"
-            elif [ "${{ github.ref }}" = "refs/heads/nix" ]; then
-              DOCKER_TAGS="${DOCKER_TAGS},${LOWER_IMAGE_NAME_DOCKER}:nix"
-            fi
-          fi
-          
-          echo "GHCR_TAGS=${GHCR_TAGS}" >> $GITHUB_OUTPUT
           echo "DOCKER_TAGS=${DOCKER_TAGS}" >> $GITHUB_OUTPUT
-          echo "Generated GHCR tags: ${GHCR_TAGS}"
-          echo "Generated Docker Hub tags: ${DOCKER_TAGS}"
+          echo "Generated tags: ${DOCKER_TAGS}"
 
       - name: Load image into Docker
         run: |
           docker load < result
 
-      - name: Push to GHCR
-        run: |
-          IFS=',' read -ra GH_TAGS <<< "${{ steps.meta.outputs.GHCR_TAGS }}"
-          for tag in "${GH_TAGS[@]}"; do
-            docker tag trace-nix:latest "$tag"
-            docker push "$tag"
-          done
-
       - name: Push to Docker Hub
-        if: ${{ env.DOCKER_USERNAME != '' }}
         run: |
           IFS=',' read -ra DH_TAGS <<< "${{ steps.meta.outputs.DOCKER_TAGS }}"
           for tag in "${DH_TAGS[@]}"; do

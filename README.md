@@ -22,10 +22,9 @@ Trace is a clean, secure, and lightning-fast WHOIS, IP, and ASN lookup web utili
 
 ## 📦 Container Registry
 
-The Docker image is published to the following registries:
+The Docker image is built with **Nix** (no Alpine, fully reproducible) and published to Docker Hub:
 
-*   **Docker Hub (Recommended)**: [ubermetroid/trace](https://hub.docker.com/r/ubermetroid/trace)
-*   **GitHub Container Registry (GHCR)**: [ghcr.io/ubermetroid/trace](https://github.com/UberMetroid/trace/pkgs/container/trace)
+*   **Docker Hub**: [ubermetroid/trace](https://hub.docker.com/r/ubermetroid/trace)
 
 ---
 
@@ -68,10 +67,28 @@ docker compose up -d
 
 ### Building the Image Locally
 
-To build the Docker container locally from the source files:
+To build the Docker container locally from the source files using Nix:
 
 ```bash
-docker build -t ubermetroid/trace:latest .
+nix build .#dockerImage
+docker load < result
+docker tag trace-nix:latest ubermetroid/trace:latest
+```
+
+The image is Nix-built (no Alpine, no Docker daemon dependency for the build).
+For development iteration, use the devShell:
+
+```bash
+nix develop
+```
+
+### APT (Debian / Ubuntu)
+
+Trace is also distributed as a `.deb` package from the official UberMetroid APT repository:
+
+```bash
+curl -fsSL https://ubermetroid.github.io/packages/apt/install.sh | sudo bash
+sudo apt install trace
 ```
 
 
