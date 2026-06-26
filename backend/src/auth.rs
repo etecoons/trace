@@ -204,9 +204,13 @@ pub async fn verify_pin(
 
     if safe_compare(pin_str, expected_pin) {
         state.reset_login_attempts(ip).await;
-        
+
         let session_id = generate_session_id();
-        state.active_sessions.write().await.insert(session_id.clone());
+        state
+            .active_sessions
+            .write()
+            .await
+            .insert(session_id.clone());
 
         let cookie_max_age = Duration::from_secs((state.config.cookie_max_age_hours * 3600) as u64);
         let secure = headers

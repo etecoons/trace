@@ -4,7 +4,8 @@ fn main() {
     // Clear screen
     print!("\x1B[2J\x1B[1;1H");
 
-    println!(r#" _______________________________________
+    println!(
+        r#" _______________________________________
 / I'm sorry, Dave. I'm afraid Nix won't \
 \ let me do that.                       /
  ---------------------------------------
@@ -12,7 +13,8 @@ fn main() {
          \  (oo)\_______
             (__)\       )\/\
                 ||----w |
-                ||     ||"#);
+                ||     ||"#
+    );
 
     println!("\x1B[1;31m\nSystem Alert: Console Access is UNAUTHORIZED.\x1B[0m");
     println!("This application is running inside a secure, read-only Nix container.");

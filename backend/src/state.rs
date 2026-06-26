@@ -73,7 +73,7 @@ impl AppState {
 
         let mut map = self.rate_limiter.write().await;
         let timestamps = map.entry(ip).or_insert_with(Vec::new);
-        
+
         timestamps.retain(|&t| now.duration_since(t) < window);
 
         if timestamps.len() >= max_requests {

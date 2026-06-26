@@ -39,13 +39,11 @@ async fn main() {
             let _ = std::fs::create_dir_all(dir);
             let error_file = std::fs::OpenOptions::new()
                 .create(true)
-                .write(true)
                 .append(true)
                 .open(std::path::Path::new(dir).join("error.log"))
                 .ok();
             let app_file = std::fs::OpenOptions::new()
                 .create(true)
-                .write(true)
                 .append(true)
                 .open(std::path::Path::new(dir).join("app.log"))
                 .ok();

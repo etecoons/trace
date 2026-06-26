@@ -33,11 +33,7 @@ impl AppConfig {
         let pin = std::env::var("TRACE_PIN")
             .or_else(|_| std::env::var("PIN"))
             .ok()
-            .filter(|p| {
-                !p.is_empty()
-                    && p.len() >= 4
-                    && p.len() <= 64
-            });
+            .filter(|p| !p.is_empty() && p.len() >= 4 && p.len() <= 64);
 
         let max_attempts = std::env::var("MAX_ATTEMPTS")
             .ok()
@@ -87,10 +83,12 @@ impl AppConfig {
             .unwrap_or(false);
 
         let enable_themes = std::env::var("ENABLE_THEMES")
-            .map(|v| v == "true" || v == "on").unwrap_or(false);
+            .map(|v| v == "true" || v == "on")
+            .unwrap_or(false);
 
         let enable_print = std::env::var("ENABLE_PRINT")
-            .map(|v| v == "true" || v == "on").unwrap_or(false);
+            .map(|v| v == "true" || v == "on")
+            .unwrap_or(false);
 
         Self {
             port,
