@@ -20,7 +20,7 @@ gloo-net = "0.7"
 gloo-utils = "0.3"
 gloo-timers = { version = "0.4", features = ["futures"] }
 chrono = { version = "0.4", default-features = false, features = ["std", "serde", "clock"] }
-shared-assets = { path = "Assets/shared-assets/shared-rust" }
+shared-assets = { path = "Assets/shared-assets/shared-rust", version = "3.0.0" }
 
 [dependencies.web-sys]
 version = "=0.3.98"
