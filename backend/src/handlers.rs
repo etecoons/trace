@@ -134,13 +134,13 @@ pub async fn handle_lookup(
             }
             Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Error fetching WHOIS data", "message": e }))).into_response(),
         },
-        "ip" => match try_ip_lookup(&state.client, &query).await {
+        "ip" => match try_ip_lookup(&state.client, &state.upstream_limiter, &query).await {
             Ok(ip_data) => Json(serde_json::json!({ "type": "ip", "data": ip_data })).into_response(),
             Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Error fetching IP data", "message": e }))).into_response(),
         },
         "asn" => {
             let asn_number = query.to_uppercase().replace("AS", "");
-            match fetch_asn_data(&state.client, &asn_number).await {
+            match fetch_asn_data(&state.client, &state.upstream_limiter, &asn_number).await {
                 Ok(asn_data) => Json(serde_json::json!({ "type": "asn", "data": asn_data.data })).into_response(),
                 Err(e) => (StatusCode::INTERNAL_SERVER_ERROR, Json(serde_json::json!({ "error": "Error fetching ASN data", "message": e }))).into_response(),
             }

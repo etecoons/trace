@@ -1,7 +1,10 @@
 use crate::asn_types::*;
+use crate::rate_limit::UpstreamRateLimiter;
+use std::sync::Arc;
 
 pub async fn fetch_asn_data(
     client: &reqwest::Client,
+    limiter: &Arc<UpstreamRateLimiter>,
     asn_number: &str,
 ) -> Result<AsnLookupResponse, String> {
     let asn_clean = asn_number.to_uppercase().replace("AS", "");
@@ -18,6 +21,14 @@ pub async fn fetch_asn_data(
         asn_clean
     );
     let peering_db_url = format!("https://www.peeringdb.com/api/net?asn={}", asn_clean);
+
+    // Per-upstream throttle. The three calls below all run in parallel
+    // via `tokio::join!`, but each acquires its own limiter slot before
+    // firing so two back-to-back ASN lookups don't trip RIPE's 1 req/s
+    // limit.
+    limiter.acquire("ripe_stat");
+    limiter.acquire("ripe_overview");
+    limiter.acquire("peeringdb");
 
     let whois_fut = client.get(&whois_url).send();
     let overview_fut = client.get(&overview_url).send();

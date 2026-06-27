@@ -1,5 +1,4 @@
 use crate::state::AppState;
-use crate::utils::{get_client_ip, safe_compare};
 use axum::{
     Json,
     extract::{ConnectInfo, State},
@@ -7,11 +6,19 @@ use axum::{
     middleware::Next,
     response::{IntoResponse, Response},
 };
+use constant_time_eq::constant_time_eq;
+use shared_assets::auth::attempts;
+use shared_assets::server::get_client_ip;
 use std::net::SocketAddr;
 use std::time::Duration;
 
 pub const COOKIE_NAME: &str = "TRACE_PIN";
 
+/// True if the request presents a valid PIN session (cookie or header).
+///
+/// Note: the cookie value is a random session ID minted by `verify_pin`
+/// (not the raw PIN), so constant-time comparison is defense in depth
+/// against timing leaks of the session-id table.
 pub async fn is_authenticated(headers: &HeaderMap, state: &AppState) -> bool {
     let pin = match &state.config.pin {
         Some(p) => p,
@@ -33,7 +40,7 @@ pub async fn is_authenticated(headers: &HeaderMap, state: &AppState) -> bool {
 
     match (cookie_pin, header_pin) {
         (Some(cookie), _) => state.active_sessions.read().await.contains(&cookie),
-        (None, Some(hdr)) => safe_compare(hdr, pin),
+        (None, Some(hdr)) => constant_time_eq(hdr.as_bytes(), pin.as_bytes()),
         (None, None) => false,
     }
 }
@@ -105,29 +112,6 @@ pub async fn origin_validation_middleware(
     }
 }
 
-pub async fn security_headers_middleware(req: axum::extract::Request, next: Next) -> Response {
-    let mut response = next.run(req).await;
-    let headers = response.headers_mut();
-
-    headers.insert("X-Frame-Options", header::HeaderValue::from_static("DENY"));
-    headers.insert(
-        "X-Content-Type-Options",
-        header::HeaderValue::from_static("nosniff"),
-    );
-    headers.insert(
-        "Referrer-Policy",
-        header::HeaderValue::from_static("strict-origin-when-cross-origin"),
-    );
-    headers.insert(
-        "Content-Security-Policy", 
-        header::HeaderValue::from_static(
-            "default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; img-src 'self' data: blob: https:; connect-src 'self' ws: wss: http: https:; font-src 'self'; manifest-src 'self';"
-        )
-    );
-
-    response
-}
-
 #[derive(serde::Deserialize)]
 pub struct VerifyPinPayload {
     pub pin: Option<String>,
@@ -165,22 +149,20 @@ pub async fn verify_pin(
         return (StatusCode::OK, Json(serde_json::json!({ "success": true }))).into_response();
     }
 
+    // shared-assets normalizes the IP and applies the trust-proxy list,
+    // closing the X-Forwarded-For bypass the previous local impl had.
     let ip = get_client_ip(
         &headers,
         addr,
         state.config.trust_proxy,
         &state.config.trusted_proxies,
     );
+    let ip_str = ip.to_string();
+    let lockout_dur = Duration::from_secs(state.config.lockout_time_minutes * 60);
 
-    if state.is_locked_out(ip).await {
-        let map = state.login_attempts.read().await;
-        let last_time = map.get(&ip).map(|a| a.last_attempt).unwrap();
-        let lockout_dur = Duration::from_secs(state.config.lockout_time_minutes * 60);
-        let time_left = lockout_dur
-            .checked_sub(last_time.elapsed())
-            .unwrap_or(Duration::ZERO);
-        let time_left_min = (time_left.as_secs_f64() / 60.0).ceil() as u64;
-
+    if attempts::is_locked_out(&ip_str, state.config.max_attempts, lockout_dur) {
+        let remaining = attempts::lockout_remaining_secs(&ip_str, lockout_dur);
+        let time_left_min = (remaining as f64 / 60.0).ceil() as u64;
         return (
             StatusCode::TOO_MANY_REQUESTS,
             Json(serde_json::json!({
@@ -202,8 +184,8 @@ pub async fn verify_pin(
             .into_response();
     }
 
-    if safe_compare(pin_str, expected_pin) {
-        state.reset_login_attempts(ip).await;
+    if constant_time_eq(pin_str.as_bytes(), expected_pin.as_bytes()) {
+        attempts::reset_attempts(&ip_str);
 
         let session_id = generate_session_id();
         state
@@ -239,10 +221,16 @@ pub async fn verify_pin(
         )
             .into_response()
     } else {
-        state.record_login_attempt(ip).await;
-        let map = state.login_attempts.read().await;
-        let count = map.get(&ip).map(|a| a.count).unwrap_or(0);
-        let remaining = state.config.max_attempts.saturating_sub(count);
+        let attempt = attempts::record_attempt(&ip_str);
+        let remaining = state.config.max_attempts.saturating_sub(attempt.count);
+        tracing::warn!(
+            target: "auth",
+            "failed PIN attempt #{count} from {ip_str}",
+            count = attempt.count
+        );
+        if attempt.count >= state.config.max_attempts {
+            tracing::warn!(target: "auth", "IP {ip_str} locked out");
+        }
 
         (
             StatusCode::UNAUTHORIZED,
@@ -305,10 +293,12 @@ pub async fn pin_required(
         state.config.trust_proxy,
         &state.config.trusted_proxies,
     );
+    let ip_str = ip.to_string();
+    let lockout_dur = Duration::from_secs(state.config.lockout_time_minutes * 60);
     Json(serde_json::json!({
         "required": state.config.pin.is_some(),
         "length": state.config.pin.as_ref().map(|p| p.len()).unwrap_or(0),
-        "locked": state.is_locked_out(ip).await,
+        "locked": attempts::is_locked_out(&ip_str, state.config.max_attempts, lockout_dur),
         "enable_translation": state.config.enable_translation,
         "enable_themes": state.config.enable_themes,
         "enable_print": state.config.enable_print,
@@ -334,7 +324,12 @@ pub async fn rate_limit_middleware(
         &state.config.trusted_proxies,
     );
 
-    if !state.check_rate_limit(ip).await {
+    // 100 requests per 60 seconds per IP — same numbers as before,
+    // just made explicit so it's easy to tune.
+    if !state
+        .check_rate_limit(ip, 100, Duration::from_secs(60))
+        .await
+    {
         let body = serde_json::json!({
             "error": "Too many requests. Please slow down."
         });

@@ -1,10 +1,83 @@
 use crate::dns::{IpAddresses, resolve_dns};
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
+use std::net::{IpAddr, ToSocketAddrs};
 use std::sync::LazyLock;
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
 use tokio::net::TcpStream;
+
+/// Returns `true` if the IP is in any range that should never be the target
+/// of an outbound WHOIS connection from this server.
+///
+/// Covers loopback, RFC1918 private, link-local, multicast, unspecified,
+/// broadcast, IPv6 loopback, IPv6 unique-local (`fc00::/7`), IPv6
+/// link-local (`fe80::/10`), and IPv6 multicast (`ff00::/8`).
+pub fn is_private_ip(ip: IpAddr) -> bool {
+    match ip {
+        IpAddr::V4(v4) => {
+            v4.is_loopback()
+                || v4.is_private()
+                || v4.is_link_local()
+                || v4.is_multicast()
+                || v4.is_unspecified()
+                || v4.is_broadcast()
+        }
+        IpAddr::V6(v6) => {
+            v6.is_loopback()
+                || v6.is_unspecified()
+                || (v6.segments()[0] & 0xfe00) == 0xfc00
+                || (v6.segments()[0] & 0xffc0) == 0xfe80
+                || (v6.segments()[0] & 0xff00) == 0xff00
+        }
+    }
+}
+
+/// Resolve a WHOIS host to a concrete SocketAddr after validating that
+/// every resolved IP is public. Returning the resolved addr (rather than
+/// the host string) lets the caller connect without a second DNS lookup,
+/// which closes the DNS-rebinding window.
+///
+/// A `host:port` literal bypasses DNS entirely; if the port is 43 we
+/// trust the operator not to have set the host to an internal name, and
+/// we still check that the host (parsed as an IP) is public.
+async fn resolve_public_whois_addr(target: &str) -> Result<std::net::SocketAddr, String> {
+    // Strip optional :43 suffix.
+    let (host, port) = match target.rsplit_once(':') {
+        Some((h, p)) if p.parse::<u16>().is_ok() => (h, p.parse::<u16>().unwrap()),
+        _ => (target, 43u16),
+    };
+
+    // If `host` is a literal IP, validate it directly.
+    if let Ok(ip) = host.parse::<IpAddr>() {
+        if is_private_ip(ip) {
+            return Err(format!(
+                "refusing WHOIS connection: {ip} is private/internal"
+            ));
+        }
+        return Ok(std::net::SocketAddr::new(ip, port));
+    }
+
+    // Otherwise resolve via DNS and reject if any resolved IP is private.
+    let addrs: Vec<std::net::SocketAddr> = (host, port)
+        .to_socket_addrs()
+        .map_err(|e| format!("DNS resolution failed for {host}: {e}"))?
+        .collect();
+    if addrs.is_empty() {
+        return Err(format!("DNS resolution returned no addresses for {host}"));
+    }
+    for addr in &addrs {
+        if is_private_ip(addr.ip()) {
+            return Err(format!(
+                "refusing WHOIS connection to {host}: resolved to private/internal IP {}",
+                addr.ip()
+            ));
+        }
+    }
+    // Use the first resolved address; DNS re-resolution is never performed
+    // after this point, closing the DNS-rebinding attack window.
+    Ok(addrs[0])
+}
 
 static RE_REFER: LazyLock<regex::Regex> = LazyLock::new(|| {
     regex::Regex::new(r"(?i)^\s*(refer|whois|whois\s+server|registrar\s+whois\s+server)\s*:\s*([a-z0-9\-\._]+)\s*$").unwrap()
@@ -47,6 +120,11 @@ pub async fn whois_lookup(query: &str) -> Result<String, String> {
         }
         visited.insert(server.clone());
 
+        // SSRF defense: resolve to a concrete public IP before opening
+        // any socket. A `Refer:` line in WHOIS data can name any host;
+        // if the host resolves to a private IP we refuse the redirect.
+        let _resolved = resolve_public_whois_addr(&server).await?;
+
         tracing::info!("Querying WHOIS server {} for {}", server, query);
         let raw_data = query_whois_server(&server, query).await?;
 
@@ -60,15 +138,27 @@ pub async fn whois_lookup(query: &str) -> Result<String, String> {
 }
 
 async fn query_whois_server(server: &str, query: &str) -> Result<String, String> {
-    let addr = if server.contains(':') {
-        server.to_string()
-    } else {
-        format!("{}:43", server)
-    };
-    let mut stream = tokio::time::timeout(Duration::from_secs(5), TcpStream::connect(&addr))
+    // Resolve to a concrete SocketAddr (with private-IP validation) before
+    // opening the socket. This is SSRF defense in depth: even if a
+    // `Refer:` line in the WHOIS body tries to redirect to a host that
+    // resolves to a private IP, we refuse.
+    let addr = resolve_public_whois_addr(server).await?;
+    let mut stream = tokio::time::timeout(Duration::from_secs(5), TcpStream::connect(addr))
         .await
         .map_err(|_| format!("Connection timeout to {}", server))?
         .map_err(|e| format!("Failed to connect to {}: {}", server, e))?;
+
+    // Belt-and-braces: verify the connected peer is also public. This
+    // catches the (narrow) case where DNS rebinding happens between
+    // resolution and the kernel's connect() call.
+    let peer_ip = stream.peer_addr().ok().map(|a| a.ip());
+    if let Some(ip) = peer_ip {
+        if is_private_ip(ip) {
+            return Err(format!(
+                "refusing WHOIS connection: peer {ip} is private/internal"
+            ));
+        }
+    }
 
     stream
         .write_all(format!("{}\r\n", query).as_bytes())
@@ -263,5 +353,102 @@ fn parse_generic_whois(raw_data: &str, result: &mut ParsedWhoisData) {
                 result.nameservers.push(ns);
             }
         }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::net::{Ipv4Addr, Ipv6Addr};
+
+    #[test]
+    fn rejects_ipv4_loopback() {
+        assert!(is_private_ip("127.0.0.1".parse().unwrap()));
+        assert!(is_private_ip("127.255.255.254".parse().unwrap()));
+    }
+
+    #[test]
+    fn rejects_ipv4_rfc1918() {
+        assert!(is_private_ip("10.0.0.1".parse().unwrap()));
+        assert!(is_private_ip("172.16.0.1".parse().unwrap()));
+        assert!(is_private_ip("192.168.1.1".parse().unwrap()));
+    }
+
+    #[test]
+    fn rejects_ipv4_link_local() {
+        assert!(is_private_ip("169.254.169.254".parse().unwrap()));
+    }
+
+    #[test]
+    fn rejects_ipv4_multicast_and_unspecified() {
+        assert!(is_private_ip("224.0.0.1".parse().unwrap()));
+        assert!(is_private_ip(IpAddr::V4(Ipv4Addr::UNSPECIFIED)));
+        assert!(is_private_ip(IpAddr::V4(Ipv4Addr::BROADCAST)));
+    }
+
+    #[test]
+    fn accepts_public_ipv4() {
+        assert!(!is_private_ip("8.8.8.8".parse().unwrap()));
+        assert!(!is_private_ip("1.1.1.1".parse().unwrap()));
+    }
+
+    #[test]
+    fn rejects_ipv6_loopback_and_unspecified() {
+        assert!(is_private_ip(IpAddr::V6(Ipv6Addr::LOCALHOST)));
+        assert!(is_private_ip(IpAddr::V6(Ipv6Addr::UNSPECIFIED)));
+    }
+
+    #[test]
+    fn rejects_ipv6_unique_local_fc00() {
+        // fc00::/7
+        assert!(is_private_ip("fc00::1".parse().unwrap()));
+        assert!(is_private_ip("fd00::1".parse().unwrap()));
+    }
+
+    #[test]
+    fn rejects_ipv6_link_local_fe80() {
+        // fe80::/10
+        assert!(is_private_ip("fe80::1".parse().unwrap()));
+    }
+
+    #[test]
+    fn rejects_ipv6_multicast() {
+        // ff00::/8
+        assert!(is_private_ip("ff02::1".parse().unwrap()));
+    }
+
+    #[tokio::test]
+    async fn resolve_public_rejects_literal_private_ip() {
+        let err = resolve_public_whois_addr("127.0.0.1:43").await.unwrap_err();
+        assert!(err.contains("private"), "got: {err}");
+    }
+
+    #[tokio::test]
+    async fn resolve_public_rejects_literal_rfc1918() {
+        let err = resolve_public_whois_addr("10.0.0.1:43").await.unwrap_err();
+        assert!(err.contains("private"), "got: {err}");
+    }
+
+    #[tokio::test]
+    async fn resolve_public_accepts_public_hostname() {
+        // whois.iana.org is a stable public WHOIS host.
+        let addr = resolve_public_whois_addr("whois.iana.org").await.unwrap();
+        assert_eq!(addr.port(), 43);
+        assert!(!is_private_ip(addr.ip()));
+    }
+
+    #[tokio::test]
+    async fn resolve_public_accepts_hostname_with_port() {
+        // host:port syntax should be accepted.
+        let addr = resolve_public_whois_addr("whois.iana.org:43").await.unwrap();
+        assert_eq!(addr.port(), 43);
+    }
+
+    #[tokio::test]
+    async fn resolve_public_rejects_unresolvable_host() {
+        // A name that won't resolve should error rather than silently
+        // connecting.
+        let result = resolve_public_whois_addr("nonexistent.invalid").await;
+        assert!(result.is_err());
     }
 }

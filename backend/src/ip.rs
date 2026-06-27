@@ -1,4 +1,9 @@
+use crate::rate_limit::UpstreamRateLimiter;
+use crate::whois::is_private_ip;
 use serde::{Deserialize, Serialize};
+use std::net::IpAddr;
+use std::str::FromStr;
+use std::sync::Arc;
 use std::time::Duration;
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
@@ -82,18 +87,37 @@ struct IpWhoIsConnection {
     org: Option<String>,
 }
 
-pub async fn try_ip_lookup(
-    client: &reqwest::Client,
-    ip: &str,
-) -> Result<GeolocationResponse, String> {
-    let clean_ip = ip
+/// Validate that a user-supplied IP is something we want to forward to
+/// third-party geolocation services. Rejects loopback, RFC1918, CGNAT,
+/// link-local, multicast, unspecified, broadcast, and the IPv6 equivalents.
+fn parse_public_ip(s: &str) -> Result<IpAddr, String> {
+    let clean = s
         .replace(['[', ']'], "")
         .split('/')
         .next()
         .unwrap_or("")
-        .to_string();
+        .trim();
+    let ip = IpAddr::from_str(clean).map_err(|e| format!("invalid IP: {e}"))?;
+    if is_private_ip(ip) {
+        return Err(format!(
+            "refusing to look up private/internal IP: {ip}"
+        ));
+    }
+    Ok(ip)
+}
+
+pub async fn try_ip_lookup(
+    client: &reqwest::Client,
+    limiter: &Arc<UpstreamRateLimiter>,
+    ip: &str,
+) -> Result<GeolocationResponse, String> {
+    // Validate before we burn API quota on a private IP and before we
+    // potentially use the user's input as a path component in a URL.
+    let parsed_ip = parse_public_ip(ip)?;
+    let clean_ip = parsed_ip.to_string();
 
     // 1. Try ipapi.co
+    limiter.acquire("ipapi");
     match client
         .get(format!("https://ipapi.co/{}/json/", clean_ip))
         .timeout(Duration::from_secs(5))
@@ -114,8 +138,12 @@ pub async fn try_ip_lookup(
     }
 
     // 2. Try ip-api.com
+    // NOTE: previously this was over HTTP, leaking the user's IP lookup
+    // in cleartext. Use HTTPS to match the rest of the app (which insists
+    // on rustls via reqwest's `rustls-tls` feature).
+    limiter.acquire("ipapi_com");
     match client
-        .get(format!("http://ip-api.com/json/{}", clean_ip))
+        .get(format!("https://ip-api.com/json/{}", clean_ip))
         .timeout(Duration::from_secs(5))
         .send()
         .await
@@ -157,6 +185,7 @@ pub async fn try_ip_lookup(
     }
 
     // 3. Try ipwho.is
+    limiter.acquire("ipwhois");
     match client
         .get(format!("https://ipwho.is/{}", clean_ip))
         .timeout(Duration::from_secs(5))

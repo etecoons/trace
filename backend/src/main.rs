@@ -1,7 +1,12 @@
 #![allow(clippy::collapsible_if, clippy::unnecessary_map_or)]
 
 use axum::{Router, middleware, routing::get};
+use shared_assets::middleware::{
+    HstsState, TitleState, cors_layer, hsts_layer, security_headers_layer, title_injection_layer,
+};
+use shared_assets::server::ServerConfig;
 use std::net::SocketAddr;
+use std::sync::Arc;
 use std::time::Duration;
 use tower_http::services::ServeDir;
 use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
@@ -14,12 +19,18 @@ mod dns;
 mod handlers;
 mod ip;
 mod query;
+mod rate_limit;
 mod state;
 mod utils;
 mod whois;
 
 use config::AppConfig;
+use rate_limit::UpstreamRateLimiter;
 use state::AppState;
+
+/// Sliding-window per-IP request budget for the `rate_limit_middleware`.
+const RATE_LIMIT_WINDOW: Duration = Duration::from_secs(60);
+const RATE_LIMIT_MAX: usize = 100;
 
 #[tokio::main]
 async fn main() {
@@ -83,34 +94,28 @@ async fn main() {
         .build()
         .expect("Failed to build reqwest client");
 
-    let state = AppState::new(config.clone(), client);
+    let upstream_limiter = Arc::new(UpstreamRateLimiter::new());
+    let state = AppState::new(config.clone(), client, upstream_limiter.clone());
 
-    // Pre-generate PWA files if directory is already compiled
     handlers::generate_pwa_manifest(&config.site_title);
 
-    // Lockout cleanup thread
+    // Background cleanup. PIN-attempt lockouts are now global via
+    // shared_assets and clean themselves up; we only need to clean the
+    // per-IP rate-limiter table.
     let state_clone = state.clone();
+    let window = RATE_LIMIT_WINDOW;
     tokio::spawn(async move {
         loop {
             tokio::time::sleep(Duration::from_secs(60)).await;
-            state_clone.clean_old_lockouts().await;
-            state_clone.clean_old_rate_limits().await;
+            state_clone.clean_old_rate_limits(window).await;
         }
     });
 
-    let cors = if config.allowed_origins == "*" {
-        tower_http::cors::CorsLayer::permissive()
-    } else {
-        let mut cors = tower_http::cors::CorsLayer::new()
-            .allow_methods([axum::http::Method::GET, axum::http::Method::POST])
-            .allow_headers([axum::http::header::CONTENT_TYPE, axum::http::header::COOKIE]);
-        for origin in config.allowed_origins.split(',') {
-            if let Ok(parsed) = origin.trim().parse::<axum::http::HeaderValue>() {
-                cors = cors.allow_origin(parsed);
-            }
-        }
-        cors.allow_credentials(true)
-    };
+    // shared-assets drives the security middleware from a single
+    // ServerConfig. The TRACE prefix makes `TRACE_PIN`, `TRACE_PORT`,
+    // `TRACE_SITE_TITLE`, etc. take precedence over generic env vars.
+    let server_config = Arc::new(ServerConfig::from_env("TRACE"));
+    let cors = cors_layer(&server_config);
 
     let api_routes = Router::new()
         .route(
@@ -139,6 +144,10 @@ async fn main() {
             auth::origin_validation_middleware,
         ));
 
+    // Per-upstream throttle for outbound calls is held in AppState
+    // (`state.upstream_limiter`) so `asn::fetch_asn_data` and
+    // `ip::try_ip_lookup` can `acquire(...)` before each request.
+
     let app = Router::new()
         .nest("/api", api_routes)
         .route("/config", get(handlers::serve_config))
@@ -146,7 +155,18 @@ async fn main() {
         .route("/", get(handlers::serve_index))
         .route("/index.html", get(handlers::serve_index))
         .fallback_service(ServeDir::new("frontend/dist"))
-        .layer(middleware::from_fn(auth::security_headers_middleware))
+        // shared-assets layers: title injection sees the raw HTML,
+        // security headers add CSP/X-Frame-Options/etc., HSTS is HTTPS-only,
+        // CORS is outermost so preflight requests aren't gated by auth.
+        .layer(middleware::from_fn_with_state(
+            TitleState(server_config.clone()),
+            title_injection_layer,
+        ))
+        .layer(middleware::from_fn_with_state(
+            HstsState(server_config.clone()),
+            hsts_layer,
+        ))
+        .layer(middleware::from_fn(security_headers_layer))
         .layer(tower_http::trace::TraceLayer::new_for_http())
         .layer(cors)
         .with_state(state);
@@ -154,11 +174,29 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], config.port));
     tracing::info!("Starting server on {}", addr);
 
-    let listener = tokio::net::TcpListener::bind(addr).await.unwrap();
+    let listener = tokio::net::TcpListener::bind(addr)
+        .await
+        .expect("failed to bind");
     axum::serve(
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
+    .with_graceful_shutdown(graceful_shutdown())
     .await
-    .unwrap();
+    .expect("server error");
+}
+
+async fn graceful_shutdown() {
+    use tokio::signal::unix::{SignalKind, signal};
+
+    let mut sigint = signal(SignalKind::interrupt()).expect("install SIGINT handler");
+    let mut sigterm = signal(SignalKind::terminate()).expect("install SIGTERM handler");
+
+    tokio::select! {
+        _ = sigint.recv() => tracing::info!("received SIGINT"),
+        _ = sigterm.recv() => tracing::info!("received SIGTERM"),
+    }
+
+    tracing::info!("draining connections (5s)");
+    tokio::time::sleep(Duration::from_secs(5)).await;
 }

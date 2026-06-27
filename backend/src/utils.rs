@@ -1,16 +1,11 @@
-use axum::http::HeaderMap;
-use std::net::{IpAddr, SocketAddr};
-
-pub fn safe_compare(a: &str, b: &str) -> bool {
-    if a.len() != b.len() {
-        return false;
-    }
-    let mut result = 0;
-    for (x, y) in a.bytes().zip(b.bytes()) {
-        result |= x ^ y;
-    }
-    result == 0
-}
+//! Small helpers that don't fit elsewhere.
+//!
+//! Most of what used to live here has been replaced by [`shared_assets`]:
+//!
+//! - Constant-time comparison → [`constant_time_eq`]
+//! - Client-IP extraction   → [`shared_assets::server::get_client_ip`]
+//! - PIN-hash helper        → [`hash_pin`] (kept for the local session
+//!   ID generator in `auth.rs`)
 
 #[allow(dead_code)]
 pub fn hash_pin(pin: &str) -> String {
@@ -24,59 +19,23 @@ pub fn hash_pin(pin: &str) -> String {
         .collect::<String>()
 }
 
-pub fn normalize_ip(ip: IpAddr) -> IpAddr {
-    match ip {
-        IpAddr::V6(ipv6) => {
-            if let Some(ipv4) = ipv6.to_ipv4_mapped() {
-                IpAddr::V4(ipv4)
-            } else {
-                IpAddr::V6(ipv6)
-            }
-        }
-        IpAddr::V4(ipv4) => IpAddr::V4(ipv4),
-    }
-}
+#[cfg(test)]
+mod tests {
+    use super::*;
 
-pub fn first_ip_from_x_forwarded_for(headers: &HeaderMap) -> Option<IpAddr> {
-    let xff = headers.get("x-forwarded-for")?.to_str().ok()?;
-    let first = xff.split(',').next()?.trim();
-    first.parse::<IpAddr>().ok().map(normalize_ip)
-}
-
-pub fn is_trusted_proxy(remote_addr: IpAddr, trusted_list: &[ipnet::IpNet]) -> bool {
-    let normalized = normalize_ip(remote_addr);
-    for net in trusted_list {
-        if net.contains(&normalized) {
-            return true;
-        }
-    }
-    false
-}
-
-pub fn get_client_ip(
-    headers: &HeaderMap,
-    connect_info: SocketAddr,
-    trust_proxy: bool,
-    trusted_proxies: &[ipnet::IpNet],
-) -> IpAddr {
-    let socket_ip = normalize_ip(connect_info.ip());
-
-    if !trust_proxy {
-        return socket_ip;
+    #[test]
+    fn hash_pin_is_deterministic() {
+        assert_eq!(hash_pin("test"), hash_pin("test"));
     }
 
-    if !trusted_proxies.is_empty() {
-        if is_trusted_proxy(socket_ip, trusted_proxies) {
-            if let Some(xff_ip) = first_ip_from_x_forwarded_for(headers) {
-                return xff_ip;
-            }
-        }
-        return socket_ip;
+    #[test]
+    fn hash_pin_differs_per_input() {
+        assert_ne!(hash_pin("a"), hash_pin("b"));
     }
 
-    if let Some(xff_ip) = first_ip_from_x_forwarded_for(headers) {
-        xff_ip
-    } else {
-        socket_ip
+    #[test]
+    fn hash_pin_is_64_hex_chars() {
+        // SHA-256 = 32 bytes = 64 hex chars.
+        assert_eq!(hash_pin("x").len(), 64);
     }
 }

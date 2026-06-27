@@ -24,4 +24,9 @@ chrono = { version = "0.4", default-features = false, features = ["std", "serde"
 regex = "1.10"
 sha2 = "0.11"
 ipnet = "2.9"
+# Used directly by `auth.rs` for PIN comparison. The same crate is
+# already pulled in transitively by `shared-assets`, but we declare it
+# explicitly here so a future shared-assets refactor doesn't silently
+# break our use of it.
+constant_time_eq = "0.3"
 
