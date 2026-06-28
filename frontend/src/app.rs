@@ -1,5 +1,8 @@
 pub mod update;
 pub mod view;
+pub mod create;
+pub mod config;
+
 
 use crate::types::*;
 use yew::prelude::*;

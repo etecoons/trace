@@ -1,64 +1,15 @@
 use crate::api::fetch_lookup;
 use crate::app::App;
-use crate::i18n::{get_saved_language, get_translations, save_language};
+use crate::i18n::{get_translations, save_language};
 use crate::storage::StorageService;
 use crate::types::*;
-use crate::utils::{get_hash, get_query_param, scroll_to_element};
+use crate::utils::{get_hash, scroll_to_element, get_query_param};
+
 use gloo_net::http::Request;
 use yew::prelude::*;
-use shared_assets::theme::{Theme, mapping::Scheme};
+use shared_assets::theme::Theme;
 
 impl App {
-    pub fn create_app(ctx: &Context<Self>) -> Self {
-        let language = get_saved_language();
-        let raw = StorageService::get_item("theme", Theme::default().name());
-        let theme = if let Some(scheme) = Scheme::from_id(&raw) {
-            scheme.to_theme().name().to_string()
-        } else {
-            Theme::from_name(&raw)
-                .unwrap_or_default()
-                .name()
-                .to_string()
-        };
-        if theme != raw {
-            StorageService::set_item("theme", &theme);
-        }
-
-        let link = ctx.link().clone();
-        wasm_bindgen_futures::spawn_local(async move {
-            if let Ok(resp) = Request::get("/config").send().await {
-                if let Ok(json) = resp.json::<serde_json::Value>().await {
-                    link.send_message(Msg::LoadConfig(json));
-                }
-            }
-        });
-
-
-        Self {
-            query: String::new(),
-            site_title: "Trace".to_string(),
-            theme,
-            language,
-            loading: false,
-            error: None,
-            response: None,
-            toasts: Vec::new(),
-            next_toast_id: 0,
-            status_text: "Ready".to_string(),
-            status_type: "info".to_string(),
-            is_authenticated: true,
-            pin_required: false,
-            pin_length: 0,
-            pin_input: String::new(),
-            error_message: None,
-            enable_translation: false,
-            enable_themes: true,
-            enable_print: false,
-            show_version: true,
-            show_github: true,
-        }
-    }
-
     pub fn update_app(&mut self, ctx: &Context<Self>, msg: Msg) -> bool {
         let tr = get_translations(self.language);
         match msg {
@@ -119,75 +70,7 @@ impl App {
                 }
                 true
             }
-            Msg::LoadConfig(json) => {
-                if let Some(title) = json.get("siteTitle").and_then(|v| v.as_str()) {
-                    self.site_title = title.to_string();
-                    if let Some(window) = web_sys::window() {
-                        if let Some(document) = window.document() {
-                            document.set_title(&self.site_title);
-                        }
-                    }
-                }
-                self.pin_required = json
-                    .get("pinRequired")
-                    .and_then(|v| v.as_bool())
-                    .unwrap_or(false);
-                self.pin_length =
-                    json.get("pinLength").and_then(|v| v.as_u64()).unwrap_or(0) as usize;
-                self.enable_translation = json
-                    .get("enableTranslation")
-                    .and_then(|v| v.as_bool())
-                    .or_else(|| json.get("enable_translation").and_then(|v| v.as_bool()))
-                    .unwrap_or(false);
-                self.enable_themes = json
-                    .get("enableThemes")
-                    .and_then(|v| v.as_bool())
-                    .or_else(|| json.get("enable_themes").and_then(|v| v.as_bool()))
-                    .unwrap_or(true);
-                self.enable_print = json
-                    .get("enablePrint")
-                    .and_then(|v| v.as_bool())
-                    .or_else(|| json.get("enable_print").and_then(|v| v.as_bool()))
-                    .unwrap_or(true);
-                self.show_version = json
-                    .get("showVersion")
-                    .and_then(|v| v.as_bool())
-                    .or_else(|| json.get("show_version").and_then(|v| v.as_bool()))
-                    .unwrap_or(true);
-                self.show_github = json
-                    .get("showGithub")
-                    .and_then(|v| v.as_bool())
-                    .or_else(|| json.get("show_github").and_then(|v| v.as_bool()))
-                    .unwrap_or(true);
-
-                if !self.enable_themes {
-                    self.theme = Theme::Tourian.name().to_string();
-                    if let Some(window) = web_sys::window() {
-                        if let Some(doc) = window.document() {
-                            if let Some(html) = doc.document_element() {
-                                let _ = html.set_attribute("data-theme", Theme::Tourian.name());
-                                html.set_class_name(Theme::Tourian.name());
-                            }
-                        }
-                    }
-                }
-
-                if self.pin_required {
-                    let link = ctx.link().clone();
-                    wasm_bindgen_futures::spawn_local(async move {
-                        if let Ok(resp) = Request::get("/api/auth-check").send().await {
-                            if resp.status() == 200 {
-                                link.send_message(Msg::VerifyPinSuccess);
-                                return;
-                            }
-                        }
-                        link.send_message(Msg::VerifyPinFailure(String::new()));
-                    });
-                } else {
-                    self.is_authenticated = true;
-                }
-                true
-            }
+            Msg::LoadConfig(json) => self.handle_load_config(ctx, json),
             Msg::PinInputChanged(val) => {
                 self.pin_input = val;
                 self.error_message = None;
