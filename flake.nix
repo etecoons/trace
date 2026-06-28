@@ -16,6 +16,7 @@
       let
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs { inherit system overlays; };
+        lib = pkgs.lib;
         rustVersion = pkgs.rust-bin.stable."1.96.0".default.override {
           targets = [ "wasm32-unknown-unknown" ];
         };
@@ -32,6 +33,11 @@
 
           cargoLock = {
             lockFile = ./Cargo.lock;
+            outputHashes = {
+              "shared-core-3.0.0" = "sha256-HoTKNTmUjH9HS1ipABpP/B+sNqZNHTVtyKU9N8CTt+U=";
+              "shared-backend-3.0.0" = "sha256-HoTKNTmUjH9HS1ipABpP/B+sNqZNHTVtyKU9N8CTt+U=";
+              "shared-frontend-3.0.0" = "sha256-HoTKNTmUjH9HS1ipABpP/B+sNqZNHTVtyKU9N8CTt+U=";
+            };
           };
 
           nativeBuildInputs = [
@@ -62,6 +68,11 @@
 
           cargoLock = {
             lockFile = ./Cargo.lock;
+            outputHashes = {
+              "shared-core-3.0.0" = "sha256-HoTKNTmUjH9HS1ipABpP/B+sNqZNHTVtyKU9N8CTt+U=";
+              "shared-backend-3.0.0" = "sha256-HoTKNTmUjH9HS1ipABpP/B+sNqZNHTVtyKU9N8CTt+U=";
+              "shared-frontend-3.0.0" = "sha256-HoTKNTmUjH9HS1ipABpP/B+sNqZNHTVtyKU9N8CTt+U=";
+            };
           };
 
           nativeBuildInputs = [ pkgs.pkg-config ];
