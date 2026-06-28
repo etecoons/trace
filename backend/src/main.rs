@@ -13,16 +13,14 @@ use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
 
 mod asn_types;
 mod config;
-mod dns;
-mod ip;
-mod query;
-mod rate_limit;
 mod routes;
+pub mod services;
 mod state;
-mod utils;
+pub mod utils;
 
 use config::AppConfig;
-use rate_limit::UpstreamRateLimiter;
+pub use services::{dns, ip, query, rate_limit};
+use services::rate_limit::UpstreamRateLimiter;
 use routes::{auth, lookup};
 use state::AppState;
 
