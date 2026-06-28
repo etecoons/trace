@@ -1,8 +1,8 @@
-use crate::asn::fetch_asn_data;
+use crate::routes::asn::fetch_asn_data;
 use crate::ip::try_ip_lookup;
 use crate::query::detect_query_type;
 use crate::state::AppState;
-use crate::whois::{parse_whois_data, whois_lookup};
+use crate::routes::whois::{parse_whois_data, whois_lookup};
 use axum::{
     Json,
     extract::{Path, State},

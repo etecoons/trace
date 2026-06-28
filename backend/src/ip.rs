@@ -1,5 +1,5 @@
 use crate::rate_limit::UpstreamRateLimiter;
-use crate::whois::is_private_ip;
+use crate::routes::whois::is_private_ip;
 use serde::{Deserialize, Serialize};
 use std::net::IpAddr;
 use std::str::FromStr;

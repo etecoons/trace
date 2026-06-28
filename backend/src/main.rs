@@ -11,22 +11,20 @@ use std::time::Duration;
 use tower_http::services::ServeDir;
 use tracing_subscriber::{Layer, layer::SubscriberExt, util::SubscriberInitExt};
 
-mod asn;
+mod routes;
 mod asn_types;
-mod auth;
 mod config;
 mod dns;
-mod handlers;
 mod ip;
 mod query;
 mod rate_limit;
 mod state;
 mod utils;
-mod whois;
 
 use config::AppConfig;
 use rate_limit::UpstreamRateLimiter;
 use state::AppState;
+use routes::{auth, lookup};
 
 /// Sliding-window per-IP request budget for the `rate_limit_middleware`.
 const RATE_LIMIT_WINDOW: Duration = Duration::from_secs(60);
@@ -96,7 +94,7 @@ async fn main() {
     let upstream_limiter = Arc::new(UpstreamRateLimiter::new());
     let state = AppState::new(config.clone(), client, upstream_limiter.clone());
 
-    handlers::generate_pwa_manifest(&config.site_title);
+    lookup::generate_pwa_manifest(&config.site_title);
 
     // Background cleanup. PIN-attempt lockouts are now global via
     // shared_assets and clean themselves up; we only need to clean the
@@ -119,7 +117,7 @@ async fn main() {
     let api_routes = Router::new()
         .route(
             "/lookup/{query}",
-            get(handlers::handle_lookup).layer(middleware::from_fn_with_state(
+            get(lookup::handle_lookup).layer(middleware::from_fn_with_state(
                 state.clone(),
                 auth::require_pin,
             )),
@@ -149,10 +147,10 @@ async fn main() {
 
     let app = Router::new()
         .nest("/api", api_routes)
-        .route("/config", get(handlers::serve_config))
-        .route("/health", get(handlers::serve_health))
-        .route("/", get(handlers::serve_index))
-        .route("/index.html", get(handlers::serve_index))
+        .route("/config", get(lookup::serve_config))
+        .route("/health", get(lookup::serve_health))
+        .route("/", get(lookup::serve_index))
+        .route("/index.html", get(lookup::serve_index))
         .fallback_service(ServeDir::new("frontend/dist"))
         // shared-assets layers: title injection sees the raw HTML,
         // security headers add CSP/X-Frame-Options/etc., HSTS is HTTPS-only,
