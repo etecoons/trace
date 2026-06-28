@@ -49,6 +49,7 @@ impl App {
                     theme_toggle_tooltip={tr.toggle_theme.to_string()}
                     enable_translation={self.enable_translation}
                     enable_themes={self.enable_themes}
+                    enable_print={self.enable_print}
                     
                 />
                 <div class="container">

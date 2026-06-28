@@ -1531,7 +1531,7 @@ dependencies = [
 [[package]]
 name = "shared-backend"
 version = "3.0.0"
-source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.0#1eb8655a30943966b60e6f23972bfc59a3b6380c"
+source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.2#b0036b5fb85ec9da8d648a128a67e52205920122"
 dependencies = [
  "anyhow",
  "axum",
@@ -1550,7 +1550,7 @@ dependencies = [
 [[package]]
 name = "shared-core"
 version = "3.0.0"
-source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.0#1eb8655a30943966b60e6f23972bfc59a3b6380c"
+source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.2#b0036b5fb85ec9da8d648a128a67e52205920122"
 dependencies = [
  "constant_time_eq",
  "serde",
@@ -1559,7 +1559,7 @@ dependencies = [
 [[package]]
 name = "shared-frontend"
 version = "3.0.0"
-source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.0#1eb8655a30943966b60e6f23972bfc59a3b6380c"
+source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.2#b0036b5fb85ec9da8d648a128a67e52205920122"
 dependencies = [
  "serde",
  "shared-core",
