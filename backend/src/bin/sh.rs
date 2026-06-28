@@ -1,7 +1,7 @@
 use std::io::{self, BufRead};
 
 fn main() {
-    shared_assets::security::print_unauthorized_console_message();
+    shared_backend::security::print_unauthorized_console_message();
 
     let stdin = io::stdin();
     let mut buffer = String::new();

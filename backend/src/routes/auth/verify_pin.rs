@@ -5,8 +5,8 @@ use axum::{
     response::IntoResponse,
 };
 use constant_time_eq::constant_time_eq;
-use shared_assets::auth::attempts;
-use shared_assets::server::get_client_ip;
+use shared_backend::auth::attempts;
+use shared_backend::server::get_client_ip;
 use std::net::SocketAddr;
 use std::time::Duration;
 

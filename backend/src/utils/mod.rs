@@ -1,9 +1,9 @@
 //! Small helpers that don't fit elsewhere.
 //!
-//! Most of what used to live here has been replaced by [`shared_assets`]:
+//! Most of what used to live here has been replaced by [`shared-backend`]:
 //!
 //! - Constant-time comparison → [`constant_time_eq`]
-//! - Client-IP extraction   → [`shared_assets::server::get_client_ip`]
+//! - Client-IP extraction   → [`shared_backend::server::get_client_ip`]
 //! - PIN-hash helper        → [`hash_pin`] (kept for the local session
 //!   ID generator in `auth.rs`)
 

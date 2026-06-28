@@ -3,7 +3,7 @@ use crate::i18n::get_saved_language;
 use crate::storage::StorageService;
 use crate::types::Msg;
 use gloo_net::http::Request;
-use shared_assets::theme::{Theme, mapping::Scheme};
+use shared_frontend::theme::{Theme, mapping::Scheme};
 use yew::prelude::*;
 
 impl App {

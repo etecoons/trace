@@ -45,11 +45,11 @@ impl App {
                     logout_tooltip={tr.logout_tooltip.to_string()}
                     on_print={ctx.link().callback(|_| Msg::PrintPage)}
                     print_tooltip={tr.print_tooltip.to_string()}
-                    disable_print={self.response.is_none()}
+                    print_disabled={!self.enable_print || self.response.is_none()}
                     theme_toggle_tooltip={tr.toggle_theme.to_string()}
                     enable_translation={self.enable_translation}
                     enable_themes={self.enable_themes}
-                    enable_print={self.enable_print}
+                    
                 />
                 <div class="container">
                     if !self.is_authenticated {

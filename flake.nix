@@ -6,7 +6,7 @@
     rust-overlay.url = "github:oxalica/rust-overlay";
     flake-utils.url = "github:numtide/flake-utils";
     shared-assets = {
-      url = "github:UberMetroid/shared-assets";
+      url = "github:UberMetroid/shared-assets?ref=v3.0.0";
       flake = false;
     };
   };
@@ -16,7 +16,7 @@
       let
         overlays = [ (import rust-overlay) ];
         pkgs = import nixpkgs { inherit system overlays; };
-        rustVersion = pkgs.rust-bin.stable.latest.default.override {
+        rustVersion = pkgs.rust-bin.stable."1.96.0".default.override {
           targets = [ "wasm32-unknown-unknown" ];
         };
         rustPlatform = pkgs.makeRustPlatform {
@@ -98,6 +98,13 @@
               "4404/tcp" = {};
             };
             User = "65534:65534";
+            Healthcheck = {
+              Test = [ "CMD-SHELL" "wget -qO- http://localhost:4404/health >/dev/null 2>&1 || exit 1" ];
+              Interval = 30000000000;
+              Timeout = 10000000000;
+              Retries = 3;
+              StartPeriod = 60000000000;
+            };
           };
 
           # Create /app directory structure inside the container

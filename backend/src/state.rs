@@ -10,7 +10,7 @@ use tokio::sync::RwLock;
 /// and (for outbound calls) by `asn.rs` / `ip.rs` via the embedded
 /// [`UpstreamRateLimiter`].
 ///
-/// PIN-attempt lockouts live in [`shared_assets::auth::attempts`] (global,
+/// PIN-attempt lockouts live in [`shared_backend::auth::attempts`] (global,
 /// per-IP). This is intentionally separate: a per-IP request budget is
 /// unrelated to PIN brute-force protection, and a key in this table expires
 /// on a sliding window while PIN attempts stay locked for the configured

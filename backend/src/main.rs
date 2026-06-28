@@ -1,10 +1,10 @@
 #![allow(clippy::collapsible_if, clippy::unnecessary_map_or)]
 
 use axum::{Router, middleware, routing::get};
-use shared_assets::middleware::{
+use shared_backend::middleware::{
     HstsState, TitleState, cors_layer, hsts_layer, security_headers_layer, title_injection_layer,
 };
-use shared_assets::server::ServerConfig;
+use shared_backend::server::ServerConfig;
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
@@ -95,7 +95,7 @@ async fn main() {
     lookup::generate_pwa_manifest(&config.site_title);
 
     // Background cleanup. PIN-attempt lockouts are now global via
-    // shared_assets and clean themselves up; we only need to clean the
+    // shared-backend and clean themselves up; we only need to clean the
     // per-IP rate-limiter table.
     let state_clone = state.clone();
     let window = RATE_LIMIT_WINDOW;
@@ -106,7 +106,7 @@ async fn main() {
         }
     });
 
-    // shared-assets drives the security middleware from a single
+    // shared-backend drives the security middleware from a single
     // ServerConfig. The TRACE prefix makes `TRACE_PIN`, `TRACE_PORT`,
     // `TRACE_SITE_TITLE`, etc. take precedence over generic env vars.
     let server_config = Arc::new(ServerConfig::from_env("TRACE"));
@@ -150,7 +150,7 @@ async fn main() {
         .route("/", get(lookup::serve_index))
         .route("/index.html", get(lookup::serve_index))
         .fallback_service(ServeDir::new("frontend/dist"))
-        // shared-assets layers: title injection sees the raw HTML,
+        // shared-backend layers: title injection sees the raw HTML,
         // security headers add CSP/X-Frame-Options/etc., HSTS is HTTPS-only,
         // CORS is outermost so preflight requests aren't gated by auth.
         .layer(middleware::from_fn_with_state(

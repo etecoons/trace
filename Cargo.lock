@@ -105,6 +105,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "shared-backend",
+ "shared-core",
  "tokio",
  "tower-http",
  "tracing",
@@ -274,7 +275,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.52.0",
 ]
 
 [[package]]
@@ -309,6 +310,7 @@ dependencies = [
  "js-sys",
  "serde",
  "serde_json",
+ "shared-core",
  "shared-frontend",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -1054,7 +1056,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]
@@ -1529,7 +1531,7 @@ dependencies = [
 [[package]]
 name = "shared-backend"
 version = "3.0.0"
-source = "git+https://github.com/UberMetroid/shared-assets.git?branch=main#4f77b0b7d56b0e746d233da14f9757382a6fe81c"
+source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.0#1eb8655a30943966b60e6f23972bfc59a3b6380c"
 dependencies = [
  "anyhow",
  "axum",
@@ -1548,7 +1550,7 @@ dependencies = [
 [[package]]
 name = "shared-core"
 version = "3.0.0"
-source = "git+https://github.com/UberMetroid/shared-assets.git?branch=main#4f77b0b7d56b0e746d233da14f9757382a6fe81c"
+source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.0#1eb8655a30943966b60e6f23972bfc59a3b6380c"
 dependencies = [
  "constant_time_eq",
  "serde",
@@ -1557,7 +1559,7 @@ dependencies = [
 [[package]]
 name = "shared-frontend"
 version = "3.0.0"
-source = "git+https://github.com/UberMetroid/shared-assets.git?branch=main#4f77b0b7d56b0e746d233da14f9757382a6fe81c"
+source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.0#1eb8655a30943966b60e6f23972bfc59a3b6380c"
 dependencies = [
  "serde",
  "shared-core",
@@ -1600,7 +1602,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52d1cfed4120b4d927bf7c0f86d2087a4a7d6027c906d9f9d525a80573b9be51"
 dependencies = [
  "libc",
- "windows-sys 0.61.2",
+ "windows-sys 0.60.2",
 ]
 
 [[package]]

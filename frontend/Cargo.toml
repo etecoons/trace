@@ -20,7 +20,8 @@ gloo-net = "0.7"
 gloo-utils = "0.3"
 gloo-timers = { version = "0.4", features = ["futures"] }
 chrono = { version = "0.4", default-features = false, features = ["std", "serde", "clock"] }
-shared-assets = { package = "shared-frontend", git = "https://github.com/UberMetroid/shared-assets.git", branch = "main" }
+shared-frontend = { git = "https://github.com/UberMetroid/shared-assets", tag = "v3.0.0" }
+shared-core = { git = "https://github.com/UberMetroid/shared-assets", tag = "v3.0.0" }
 
 [dependencies.web-sys]
 version = "=0.3.98"

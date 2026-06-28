@@ -1,7 +1,7 @@
 use crate::app::App;
 use crate::types::Msg;
 use gloo_net::http::Request;
-use shared_assets::theme::Theme;
+use shared_frontend::theme::Theme;
 use yew::prelude::*;
 
 impl App {

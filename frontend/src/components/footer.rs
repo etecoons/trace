@@ -1,1 +1,1 @@
-pub use shared_assets::Footer;
+pub use shared_frontend::Footer;

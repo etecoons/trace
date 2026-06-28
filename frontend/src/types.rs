@@ -1,6 +1,6 @@
 use serde::{Deserialize, Serialize};
 
-pub use shared_assets::i18n::Language;
+pub use shared_core::i18n::Language;
 
 #[derive(Debug, Clone, Serialize, Deserialize, PartialEq)]
 #[serde(rename_all = "camelCase")]

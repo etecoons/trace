@@ -6,7 +6,7 @@ use crate::types::*;
 use crate::utils::{get_hash, get_query_param, scroll_to_element};
 
 use gloo_net::http::Request;
-use shared_assets::theme::Theme;
+use shared_frontend::theme::Theme;
 use yew::prelude::*;
 
 impl App {
