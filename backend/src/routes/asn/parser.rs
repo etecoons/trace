@@ -1,4 +1,5 @@
 use crate::asn_types::*;
+use super::helpers::{build_arin_address, extract_created, extract_last_modified};
 
 pub fn parse_raw_responses(
     asn_val: u32,
@@ -133,33 +134,7 @@ pub fn parse_raw_responses(
     let remarks = find_all_values("remarks");
     let mut owner_address = find_all_values("address");
     if owner_address.is_empty() && is_arin {
-        let street = find_value("Address");
-        let city = find_value("City");
-        let state = find_value("StateProv");
-        let postal = find_value("PostalCode");
-        let country = find_value("Country");
-
-        let mut addr_parts = Vec::new();
-        if !street.is_empty() {
-            addr_parts.push(street);
-        }
-        let mut city_state_zip = Vec::new();
-        if !city.is_empty() {
-            city_state_zip.push(city);
-        }
-        if !state.is_empty() {
-            city_state_zip.push(state);
-        }
-        if !postal.is_empty() {
-            city_state_zip.push(postal);
-        }
-        if !city_state_zip.is_empty() {
-            addr_parts.push(city_state_zip.join(", "));
-        }
-        if !country.is_empty() {
-            addr_parts.push(country);
-        }
-        owner_address = addr_parts;
+        owner_address = build_arin_address(&find_value);
     }
     if owner_address.is_empty() {
         owner_address = remarks
@@ -185,35 +160,8 @@ pub fn parse_raw_responses(
         }
     };
 
-    let created = {
-        let c = find_value("created");
-        if !c.is_empty() {
-            Some(c)
-        } else {
-            let r = find_value("RegDate");
-            if !r.is_empty() {
-                Some(r)
-            } else {
-                let rd = find_value("reg-date");
-                if !rd.is_empty() { Some(rd) } else { None }
-            }
-        }
-    };
-
-    let last_modified = {
-        let lm = find_value("last-modified");
-        if !lm.is_empty() {
-            Some(lm)
-        } else {
-            let u = find_value("Updated");
-            if !u.is_empty() {
-                Some(u)
-            } else {
-                let ch = find_value("changed");
-                if !ch.is_empty() { Some(ch) } else { None }
-            }
-        }
-    };
+    let created = extract_created(&find_value);
+    let last_modified = extract_last_modified(&find_value);
 
     let website = peering_db_net
         .and_then(|net| net.website.clone())
