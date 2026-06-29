@@ -1,6 +1,6 @@
 [package]
 name = "frontend"
-version = "3.0.4"
+version = "3.0.5"
 edition = "2024"
 authors = ["UberMetroid <admin@ubermetroid.com>"]
 license = "Apache-2.0"
@@ -20,8 +20,8 @@ gloo-net = "0.7"
 gloo-utils = "0.3"
 gloo-timers = { version = "0.4", features = ["futures"] }
 chrono = { version = "0.4", default-features = false, features = ["std", "serde", "clock"] }
-shared-frontend = { git = "https://github.com/UberMetroid/shared-assets", tag = "v3.0.2" }
-shared-core = { git = "https://github.com/UberMetroid/shared-assets", tag = "v3.0.2" }
+shared-frontend = { git = "https://github.com/UberMetroid/shared-assets", tag = "v3.0.3" }
+shared-core = { git = "https://github.com/UberMetroid/shared-assets", tag = "v3.0.3" }
 
 [dependencies.web-sys]
 version = "=0.3.98"
