@@ -92,7 +92,7 @@ dependencies = [
 
 [[package]]
 name = "backend"
-version = "3.0.8"
+version = "3.0.9"
 dependencies = [
  "axum",
  "chrono",
@@ -301,7 +301,7 @@ dependencies = [
 
 [[package]]
 name = "frontend"
-version = "3.0.8"
+version = "3.0.9"
 dependencies = [
  "chrono",
  "gloo-net 0.7.0",
