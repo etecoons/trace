@@ -85,8 +85,8 @@ impl AppConfig {
             .unwrap_or(false);
 
         let enable_themes = std::env::var("ENABLE_THEMES")
-            .map(|v| v == "true" || v == "on")
-            .unwrap_or(false);
+            .map(|v| v != "false" && v != "off")
+            .unwrap_or(true);
 
         let enable_print = std::env::var("ENABLE_PRINT")
             .map(|v| v == "true" || v == "on")
