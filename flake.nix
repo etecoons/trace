@@ -34,9 +34,9 @@
           cargoLock = {
             lockFile = ./Cargo.lock;
             outputHashes = {
-              "shared-core-3.0.0" = "sha256-ozJJ4XDZOA3BbTBrHhN3gi/2xRIuVnAq940QyNltMl8=";
-              "shared-backend-3.0.0" = "sha256-ozJJ4XDZOA3BbTBrHhN3gi/2xRIuVnAq940QyNltMl8=";
-              "shared-frontend-3.0.0" = "sha256-ozJJ4XDZOA3BbTBrHhN3gi/2xRIuVnAq940QyNltMl8=";
+              "shared-core-3.0.0" = "sha256-9+xxg+EyxixPSXM4ZxSUogUs62c7uam+ezFkg8fTBjY=";
+              "shared-backend-3.0.0" = "sha256-9+xxg+EyxixPSXM4ZxSUogUs62c7uam+ezFkg8fTBjY=";
+              "shared-frontend-3.0.0" = "sha256-9+xxg+EyxixPSXM4ZxSUogUs62c7uam+ezFkg8fTBjY=";
             };
           };
 
@@ -69,9 +69,9 @@
           cargoLock = {
             lockFile = ./Cargo.lock;
             outputHashes = {
-              "shared-core-3.0.0" = "sha256-ozJJ4XDZOA3BbTBrHhN3gi/2xRIuVnAq940QyNltMl8=";
-              "shared-backend-3.0.0" = "sha256-ozJJ4XDZOA3BbTBrHhN3gi/2xRIuVnAq940QyNltMl8=";
-              "shared-frontend-3.0.0" = "sha256-ozJJ4XDZOA3BbTBrHhN3gi/2xRIuVnAq940QyNltMl8=";
+              "shared-core-3.0.0" = "sha256-9+xxg+EyxixPSXM4ZxSUogUs62c7uam+ezFkg8fTBjY=";
+              "shared-backend-3.0.0" = "sha256-9+xxg+EyxixPSXM4ZxSUogUs62c7uam+ezFkg8fTBjY=";
+              "shared-frontend-3.0.0" = "sha256-9+xxg+EyxixPSXM4ZxSUogUs62c7uam+ezFkg8fTBjY=";
             };
           };
 
