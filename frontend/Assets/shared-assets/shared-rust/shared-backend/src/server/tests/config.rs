@@ -31,7 +31,7 @@ fn defaults_when_no_env_set() {
             assert!(cfg.pin.is_none());
             assert!(!cfg.enable_translation);
             assert!(cfg.enable_themes);
-            assert!(!cfg.enable_print);
+            assert!(cfg.enable_print);
             assert!(cfg.show_version);
             assert!(cfg.show_github);
             assert_eq!(cfg.max_attempts, 5);

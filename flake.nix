@@ -6,7 +6,7 @@
     rust-overlay.url = "github:oxalica/rust-overlay";
     flake-utils.url = "github:numtide/flake-utils";
     shared-assets = {
-      url = "github:UberMetroid/shared-assets?ref=v3.0.13";
+      url = "git+file:///home/jeryd/Projects/ubermetroid/shared-assets?ref=v3.0.17";
       flake = false;
     };
   };
@@ -28,15 +28,15 @@
         # 1. Build the WASM frontend
         frontend = rustPlatform.buildRustPackage {
           pname = "trace-frontend";
-          version = "3.0.17";
+          version = "3.0.19";
           src = ./.;
 
           cargoLock = {
             lockFile = ./Cargo.lock;
             outputHashes = {
-              "shared-core-3.0.13" = "sha256-BWRLRyE3vVyrxGzSZRfj4se2bE1cVtukZwj3o4n7cEc=";
-              "shared-backend-3.0.13" = "sha256-BWRLRyE3vVyrxGzSZRfj4se2bE1cVtukZwj3o4n7cEc=";
-              "shared-frontend-3.0.13" = "sha256-BWRLRyE3vVyrxGzSZRfj4se2bE1cVtukZwj3o4n7cEc=";
+              "shared-core-3.0.13" = "sha256-oGbq9cFo2sGByGl3KBYyz6H9OSiVfRrDMHcoV1Kjk9g=";
+              "shared-backend-3.0.13" = "sha256-oGbq9cFo2sGByGl3KBYyz6H9OSiVfRrDMHcoV1Kjk9g=";
+              "shared-frontend-3.0.13" = "sha256-oGbq9cFo2sGByGl3KBYyz6H9OSiVfRrDMHcoV1Kjk9g=";
             };
           };
 
@@ -63,15 +63,15 @@
         # 2. Build the Axum backend
         backend = rustPlatform.buildRustPackage {
           pname = "trace-backend";
-          version = "3.0.17";
+          version = "3.0.19";
           src = ./.;
 
           cargoLock = {
             lockFile = ./Cargo.lock;
             outputHashes = {
-              "shared-core-3.0.13" = "sha256-BWRLRyE3vVyrxGzSZRfj4se2bE1cVtukZwj3o4n7cEc=";
-              "shared-backend-3.0.13" = "sha256-BWRLRyE3vVyrxGzSZRfj4se2bE1cVtukZwj3o4n7cEc=";
-              "shared-frontend-3.0.13" = "sha256-BWRLRyE3vVyrxGzSZRfj4se2bE1cVtukZwj3o4n7cEc=";
+              "shared-core-3.0.13" = "sha256-oGbq9cFo2sGByGl3KBYyz6H9OSiVfRrDMHcoV1Kjk9g=";
+              "shared-backend-3.0.13" = "sha256-oGbq9cFo2sGByGl3KBYyz6H9OSiVfRrDMHcoV1Kjk9g=";
+              "shared-frontend-3.0.13" = "sha256-oGbq9cFo2sGByGl3KBYyz6H9OSiVfRrDMHcoV1Kjk9g=";
             };
           };
 

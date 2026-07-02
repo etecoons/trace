@@ -7,6 +7,7 @@ use crate::utils::{get_hash, get_query_param, scroll_to_element};
 
 use gloo_net::http::Request;
 use shared_frontend::theme::Theme;
+use shared_frontend::i18n::strings::{lookup, StringKey};
 use yew::prelude::*;
 
 impl App {
@@ -21,7 +22,7 @@ impl App {
                 let trimmed = self.query.trim().to_string();
                 if trimmed.is_empty() {
                     ctx.link()
-                        .send_message(Msg::ShowToast(tr.empty_query_toast.to_string(), true));
+                        .send_message(Msg::ShowToast(lookup(StringKey::StatusValidationError, self.language).to_string(), true));
                     return false;
                 }
                 self.loading = true;
@@ -114,6 +115,7 @@ impl App {
                 self.is_authenticated = true;
                 self.pin_input = String::new();
                 self.error_message = None;
+                ctx.link().send_message(Msg::ShowToast(lookup(StringKey::StatusPinSuccess, self.language).to_string(), false));
                 true
             }
             Msg::VerifyPinFailure(err) => {
@@ -121,6 +123,7 @@ impl App {
                 if !err.is_empty() {
                     self.error_message = Some(err);
                 }
+                ctx.link().send_message(Msg::ShowToast(lookup(StringKey::StatusPinFailure, self.language).to_string(), true));
                 true
             }
             Msg::Logout => {
@@ -137,6 +140,7 @@ impl App {
                 self.error_message = None;
                 self.response = None;
                 self.query = String::new();
+                ctx.link().send_message(Msg::ShowToast(lookup(StringKey::StatusLogout, self.language).to_string(), false));
                 true
             }
             Msg::ToggleTheme => {
@@ -159,32 +163,31 @@ impl App {
                         }
                     }
                 }
+                ctx.link().send_message(Msg::ShowToast(lookup(StringKey::StatusThemeChanged, self.language).to_string(), false));
                 true
             }
             Msg::SwitchLanguage(lang) => {
                 save_language(lang);
                 self.language = lang;
-                self.status_text = "Ready".to_string();
-                self.status_type = "info".to_string();
+                self.status_text = lookup(StringKey::StatusReady, self.language).to_string();
+                self.status_type = "success".to_string();
                 true
             }
             Msg::ShowToast(message, is_error) => {
-                let id = self.next_toast_id;
-                self.next_toast_id += 1;
-                self.toasts.push(Toast {
-                    id,
-                    message,
-                    is_error,
-                });
-                let link = ctx.link().clone();
-                gloo_timers::callback::Timeout::new(2000, move || {
-                    link.send_message(Msg::DismissToast(id));
-                })
-                .forget();
+                self.status_text = message.clone();
+                self.status_type = if is_error { "error" } else { "success" }.to_string();
+                let default_ready = lookup(StringKey::StatusReady, self.language).to_string();
+                if message != default_ready {
+                    let link = ctx.link().clone();
+                    let ready_str = default_ready.clone();
+                    gloo_timers::callback::Timeout::new(3000, move || {
+                        link.send_message(Msg::ShowToast(ready_str, false));
+                    })
+                    .forget();
+                }
                 true
             }
-            Msg::DismissToast(id) => {
-                self.toasts.retain(|t| t.id != id);
+            Msg::DismissToast(_) => {
                 true
             }
             Msg::PrintPage => {
@@ -194,12 +197,26 @@ impl App {
                     if let Some(doc) = window.document() {
                         doc.set_title(&format!("{} - {}", self.site_title, title));
                     }
-                    let _ = window.print();
+                    let print_res = window.print();
                     if let Some(doc) = window.document() {
                         doc.set_title(&original_title);
                     }
+                    if print_res.is_ok() {
+                        ctx.link().send_message(Msg::ShowToast(lookup(StringKey::StatusPrintSuccess, self.language).to_string(), false));
+                    } else {
+                        ctx.link().send_message(Msg::ShowToast(lookup(StringKey::StatusPrintFailure, self.language).to_string(), true));
+                    }
                 }
                 false
+            }
+            Msg::OnlineStatusChanged(online) => {
+                let (msg_key, is_error) = if online {
+                    (StringKey::StatusOnline, false)
+                } else {
+                    (StringKey::StatusOffline, true)
+                };
+                ctx.link().send_message(Msg::ShowToast(lookup(msg_key, self.language).to_string(), is_error));
+                true
             }
             Msg::Nothing => false,
         }
@@ -211,6 +228,27 @@ impl App {
                 ctx.link().send_message(Msg::UpdateQuery(q));
                 ctx.link().send_message(Msg::PerformLookup);
             }
+
+            use wasm_bindgen::JsCast;
+            let window = web_sys::window().unwrap();
+            
+            let link_online = ctx.link().clone();
+            let on_online = wasm_bindgen::prelude::Closure::<dyn FnMut(_)>::new(move |_: web_sys::Event| {
+                link_online.send_message(Msg::OnlineStatusChanged(true));
+            });
+            window
+                .add_event_listener_with_callback("online", on_online.as_ref().unchecked_ref())
+                .unwrap();
+            on_online.forget();
+
+            let link_offline = ctx.link().clone();
+            let on_offline = wasm_bindgen::prelude::Closure::<dyn FnMut(_)>::new(move |_: web_sys::Event| {
+                link_offline.send_message(Msg::OnlineStatusChanged(false));
+            });
+            window
+                .add_event_listener_with_callback("offline", on_offline.as_ref().unchecked_ref())
+                .unwrap();
+            on_offline.forget();
         }
     }
 }

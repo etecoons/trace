@@ -79,13 +79,20 @@ pub fn header(props: &HeaderProps) -> Html {
         props.language,
     );
 
-    let on_print = props.on_print.clone().unwrap_or_else(|| {
-        Callback::from(|_| {
-            if let Some(window) = web_sys::window() {
-                let _ = window.print();
-            }
-        })
+    let print_allowed = !props.pin_required || props.is_authenticated;
+    let on_print_prop = props.on_print.clone();
+    let on_print = Callback::from(move |e: MouseEvent| {
+        if !print_allowed {
+            return;
+        }
+        if let Some(ref cb) = on_print_prop {
+            cb.emit(e);
+        } else if let Some(window) = web_sys::window() {
+            let _ = window.print();
+        }
     });
+
+    let print_disabled = props.print_disabled || !print_allowed;
 
     // Parse the theme name into the `Theme` enum. Accept either the
     // kebab-case CSS names ("wrecked_ship") or any other value the
@@ -126,7 +133,7 @@ pub fn header(props: &HeaderProps) -> Html {
             <div class="header-right">
                 {language_picker(props.enable_translation, props.language, on_change_lang)}
                 {theme_toggle(props.enable_themes, props.toggle_theme.clone(), theme, theme_tooltip)}
-                {print_button(props.enable_print, props.print_disabled, on_print, print_tooltip)}
+                {print_button(props.enable_print, print_disabled, on_print, print_tooltip)}
                 {logout_button(props.pin_required, disabled, onclick_logout, logout_tooltip)}
             </div>
         </header>

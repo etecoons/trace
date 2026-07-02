@@ -63,11 +63,11 @@
         "nixpkgs": "nixpkgs_2"
       },
       "locked": {
-        "lastModified": 1782616745,
-        "narHash": "sha256-NN5B1cKBXF6h1Ec681gMGZ2o/99d7vKXAAfFNEvyOKA=",
+        "lastModified": 1782703273,
+        "narHash": "sha256-WJPfr9EAWVIuTMyb/ilHKUYlg/RNa0xrNiWR+p1iHUg=",
         "owner": "oxalica",
         "repo": "rust-overlay",
-        "rev": "b916d014dc57eb555f84e51172a82f7f6fb560d7",
+        "rev": "5106a604b3d67cffe8eb51a8bd9f04e607f0d31d",
         "type": "github"
       },
       "original": {
@@ -79,18 +79,18 @@
     "shared-assets": {
       "flake": false,
       "locked": {
-        "lastModified": 1782971416,
-        "narHash": "sha256-BWRLRyE3vVyrxGzSZRfj4se2bE1cVtukZwj3o4n7cEc=",
-        "owner": "UberMetroid",
-        "repo": "shared-assets",
-        "rev": "77df9865dc00e2aad6ee51fdde687e29028386c9",
-        "type": "github"
+        "lastModified": 1783014676,
+        "narHash": "sha256-oGbq9cFo2sGByGl3KBYyz6H9OSiVfRrDMHcoV1Kjk9g=",
+        "ref": "v3.0.17",
+        "rev": "cc842eaad98f11f669ce103cd9a3e9daad448b41",
+        "revCount": 62,
+        "type": "git",
+        "url": "file:///home/jeryd/Projects/ubermetroid/shared-assets"
       },
       "original": {
-        "owner": "UberMetroid",
-        "ref": "v3.0.13",
-        "repo": "shared-assets",
-        "type": "github"
+        "ref": "v3.0.17",
+        "type": "git",
+        "url": "file:///home/jeryd/Projects/ubermetroid/shared-assets"
       }
     },
     "systems": {

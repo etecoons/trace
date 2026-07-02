@@ -1,6 +1,6 @@
 [package]
 name = "shared-core"
-version = "3.0.10"
+version = "3.0.13"
 edition = "2024"
 description = "Core platform-agnostic types and primitives for UberMetroid shared assets."
 license = "Apache-2.0"

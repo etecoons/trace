@@ -83,7 +83,7 @@ impl ServerConfig {
             pin,
             enable_translation: parse_bool_env("ENABLE_TRANSLATION"),
             enable_themes: parse_optout_bool_env("ENABLE_THEMES", true),
-            enable_print: parse_bool_env("ENABLE_PRINT"),
+            enable_print: parse_optout_bool_env("ENABLE_PRINT", true),
             show_version: parse_optout_bool_env("SHOW_VERSION", true),
             show_github: parse_optout_bool_env("SHOW_GITHUB", true),
             trust_proxy,

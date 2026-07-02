@@ -6,4 +6,4 @@ pub mod utils;
 pub use shared_core::i18n;
 
 // Re-exports for ergonomics
-pub use components::{footer, footer::Footer, header, header::Header};
+pub use components::{footer, footer::Footer, header, header::Header, notifier, notifier::{ToastNotification, ToastContainer, ToastType}};

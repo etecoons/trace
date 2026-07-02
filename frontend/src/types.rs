@@ -119,5 +119,6 @@ pub enum Msg {
     ShowToast(String, bool),
     DismissToast(usize),
     PrintPage,
+    OnlineStatusChanged(bool),
     Nothing,
 }

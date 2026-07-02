@@ -104,7 +104,7 @@ dependencies = [
 
 [[package]]
 name = "backend"
-version = "3.0.17"
+version = "3.0.18"
 dependencies = [
  "axum",
  "chrono",
@@ -325,7 +325,7 @@ dependencies = [
 
 [[package]]
 name = "frontend"
-version = "3.0.17"
+version = "3.0.18"
 dependencies = [
  "chrono",
  "gloo-net 0.7.0",
@@ -766,9 +766,9 @@ checksum = "df3b46402a9d5adb4c86a0cf463f42e19994e3ee891101b1841f30a545cb49a9"
 
 [[package]]
 name = "hybrid-array"
-version = "0.4.12"
+version = "0.4.13"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "9155a582abd142abc056962c29e3ce5ff2ad5469f4246b537ed42c5deba857da"
+checksum = "818356c5132c1fede50f837ca96afbe78ff42413047f4abb886217845e1b6c8c"
 dependencies = [
  "typenum",
 ]
@@ -1473,9 +1473,9 @@ dependencies = [
 
 [[package]]
 name = "rustls-pki-types"
-version = "1.14.1"
+version = "1.15.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30a7197ae7eb376e574fe940d068c30fe0462554a3ddbe4eca7838e049c937a9"
+checksum = "764899a24af3980067ee14bc143654f297b22eaebfe3c7b6b211920a5a59b046"
 dependencies = [
  "web-time",
  "zeroize",
@@ -1604,7 +1604,7 @@ dependencies = [
 [[package]]
 name = "shared-backend"
 version = "3.0.13"
-source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.13#77df9865dc00e2aad6ee51fdde687e29028386c9"
+source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.17#cc842eaad98f11f669ce103cd9a3e9daad448b41"
 dependencies = [
  "anyhow",
  "axum",
@@ -1624,7 +1624,7 @@ dependencies = [
 [[package]]
 name = "shared-core"
 version = "3.0.13"
-source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.13#77df9865dc00e2aad6ee51fdde687e29028386c9"
+source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.17#cc842eaad98f11f669ce103cd9a3e9daad448b41"
 dependencies = [
  "constant_time_eq",
  "serde",
@@ -1633,7 +1633,7 @@ dependencies = [
 [[package]]
 name = "shared-frontend"
 version = "3.0.13"
-source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.13#77df9865dc00e2aad6ee51fdde687e29028386c9"
+source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.17#cc842eaad98f11f669ce103cd9a3e9daad448b41"
 dependencies = [
  "js-sys",
  "serde",
