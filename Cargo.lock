@@ -117,7 +117,7 @@ dependencies = [
  "serde_json",
  "sha2",
  "shared-backend",
- "shared-core",
+ "shared-core 3.0.13 (git+https://github.com/UberMetroid/shared-assets?tag=v3.0.13)",
  "tokio",
  "tower-http",
  "tracing",
@@ -287,7 +287,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "39cab71617ae0d63f51a36d69f866391735b51691dbda63cf6f96d042b63efeb"
 dependencies = [
  "libc",
- "windows-sys 0.52.0",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -334,7 +334,7 @@ dependencies = [
  "js-sys",
  "serde",
  "serde_json",
- "shared-core",
+ "shared-core 3.0.13 (git+https://github.com/UberMetroid/shared-assets?tag=v3.0.13)",
  "shared-frontend",
  "wasm-bindgen",
  "wasm-bindgen-futures",
@@ -1109,7 +1109,7 @@ version = "0.50.3"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7957b9740744892f114936ab4a57b3f487491bbeafaf8083688b16841a4240e5"
 dependencies = [
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
@@ -1614,7 +1614,7 @@ dependencies = [
  "ipnet",
  "rusqlite",
  "serde",
- "shared-core",
+ "shared-core 3.0.13 (git+https://github.com/UberMetroid/shared-assets?tag=v3.0.13)",
  "thiserror 2.0.18",
  "tokio",
  "tower-http",
@@ -1631,13 +1631,22 @@ dependencies = [
 ]
 
 [[package]]
+name = "shared-core"
+version = "3.0.13"
+source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.15#699aa209f3927a0fcce13b4f575d1b527207774a"
+dependencies = [
+ "constant_time_eq",
+ "serde",
+]
+
+[[package]]
 name = "shared-frontend"
 version = "3.0.13"
-source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.13#77df9865dc00e2aad6ee51fdde687e29028386c9"
+source = "git+https://github.com/UberMetroid/shared-assets?tag=v3.0.15#699aa209f3927a0fcce13b4f575d1b527207774a"
 dependencies = [
  "js-sys",
  "serde",
- "shared-core",
+ "shared-core 3.0.13 (git+https://github.com/UberMetroid/shared-assets?tag=v3.0.15)",
  "wasm-bindgen",
  "web-sys",
  "yew",
@@ -1678,7 +1687,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "52d1cfed4120b4d927bf7c0f86d2087a4a7d6027c906d9f9d525a80573b9be51"
 dependencies = [
  "libc",
- "windows-sys 0.60.2",
+ "windows-sys 0.61.2",
 ]
 
 [[package]]
