@@ -104,7 +104,7 @@ dependencies = [
 
 [[package]]
 name = "backend"
-version = "3.0.28"
+version = "3.0.29"
 dependencies = [
  "axum",
  "chrono",
@@ -336,7 +336,7 @@ dependencies = [
 
 [[package]]
 name = "frontend"
-version = "3.0.28"
+version = "3.0.29"
 dependencies = [
  "chrono",
  "gloo-net 0.7.0",
@@ -1603,8 +1603,8 @@ dependencies = [
 
 [[package]]
 name = "shared-backend"
-version = "3.0.28"
-source = "git+https://github.com/etecoons/shared-assets.git?tag=v3.0.28#afb616ffb4b9d43a1bd4ae119dfaa339c648049d"
+version = "3.0.29"
+source = "git+https://github.com/UberMetroid/shared-assets.git?tag=v3.0.29#cad2021cf1809e6ac00dce80beab5f241272fc69"
 dependencies = [
  "anyhow",
  "axum",
@@ -1624,8 +1624,8 @@ dependencies = [
 
 [[package]]
 name = "shared-core"
-version = "3.0.28"
-source = "git+https://github.com/etecoons/shared-assets.git?tag=v3.0.28#afb616ffb4b9d43a1bd4ae119dfaa339c648049d"
+version = "3.0.29"
+source = "git+https://github.com/UberMetroid/shared-assets.git?tag=v3.0.29#cad2021cf1809e6ac00dce80beab5f241272fc69"
 dependencies = [
  "constant_time_eq",
  "serde",
@@ -1633,8 +1633,8 @@ dependencies = [
 
 [[package]]
 name = "shared-frontend"
-version = "3.0.28"
-source = "git+https://github.com/etecoons/shared-assets.git?tag=v3.0.28#afb616ffb4b9d43a1bd4ae119dfaa339c648049d"
+version = "3.0.29"
+source = "git+https://github.com/UberMetroid/shared-assets.git?tag=v3.0.29#cad2021cf1809e6ac00dce80beab5f241272fc69"
 dependencies = [
  "js-sys",
  "serde",

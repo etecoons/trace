@@ -1,6 +1,6 @@
 [package]
 name = "frontend"
-version = "3.0.28"
+version = "3.0.29"
 edition = "2024"
 authors = ["etecoons"]
 license = "Apache-2.0"
@@ -20,8 +20,8 @@ gloo-net = "0.7"
 gloo-utils = "0.3"
 gloo-timers = { version = "0.4", features = ["futures"] }
 chrono = { version = "0.4", default-features = false, features = ["std", "serde", "clock"] }
-shared-frontend = { git = "https://github.com/etecoons/shared-assets.git", tag = "v3.0.28" }
-shared-core = { git = "https://github.com/etecoons/shared-assets.git", tag = "v3.0.28" }
+shared-frontend = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.29" }
+shared-core = { git = "https://github.com/UberMetroid/shared-assets.git", tag = "v3.0.29" }
 
 [dependencies.web-sys]
 version = "=0.3.98"
