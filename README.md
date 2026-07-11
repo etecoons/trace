@@ -42,12 +42,12 @@ Images are **UBI9-minimal** based (Red Hat Universal Base Image). Tags:
 
 ```bash
 # Pull examples
-podman pull docker.io/ghcr.io/etecoons/trace:latest
-podman pull docker.io/ghcr.io/etecoons/trace:ubi
-podman pull docker.io/ghcr.io/etecoons/trace:3.0.20
+podman pull ghcr.io/etecoons/trace:latest
+podman pull ghcr.io/etecoons/trace:ubi
+podman pull ghcr.io/etecoons/trace:3.0.20
 ```
 
-Hub: [https://hub.docker.com/r/ghcr.io/etecoons/trace](https://hub.docker.com/r/ghcr.io/etecoons/trace)
+Hub: [https://github.com/etecoons/trace/pkgs/container/trace](https://github.com/etecoons/trace/pkgs/container/trace)
 
 ### Docker Compose
 Create a `docker-compose.yml` file with the following service definition:
@@ -82,15 +82,15 @@ Requires [Podman](https://podman.io/) (or Docker) and network access to pull bas
 ```bash
 # From the repository root
 podman build --format docker -f Containerfile.ubi \
- -t docker.io/ghcr.io/etecoons/trace:3.0.20 \
- -t docker.io/ghcr.io/etecoons/trace:latest \
- -t docker.io/ghcr.io/etecoons/trace:ubi \
+ -t ghcr.io/etecoons/trace:3.0.20 \
+ -t ghcr.io/etecoons/trace:latest \
+ -t ghcr.io/etecoons/trace:ubi \
  .
 
 # Optional: push all three tags
-podman push docker.io/ghcr.io/etecoons/trace:3.0.20
-podman push docker.io/ghcr.io/etecoons/trace:latest
-podman push docker.io/ghcr.io/etecoons/trace:ubi
+podman push ghcr.io/etecoons/trace:3.0.20
+podman push ghcr.io/etecoons/trace:latest
+podman push ghcr.io/etecoons/trace:ubi
 ```
 
 ---
