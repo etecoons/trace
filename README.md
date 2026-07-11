@@ -17,7 +17,7 @@ Trace is a clean, secure, and lightning-fast WHOIS, IP, and ASN lookup web utili
 
 ---
 
-## 🟢 Key Features
+## Key Features
 * **WHOIS Lookups**: Deep queries to global WHOIS databases directly over raw TCP sockets.
 * **IP Geolocation**: Fallback IP geolocation queries and PeeringDB ASN details.
 * **Access PIN Security**: Lock down the interface with an optional numerical PIN for absolute privacy.
