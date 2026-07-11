@@ -1,6 +1,6 @@
 [package]
 name = "frontend"
-version = "3.0.22"
+version = "3.0.23"
 edition = "2024"
 authors = ["etecoons"]
 license = "Apache-2.0"
@@ -24,7 +24,7 @@ shared-frontend = { git = "https://github.com/etecoons/shared-assets.git", tag =
 shared-core = { git = "https://github.com/etecoons/shared-assets.git", tag = "v3.0.21" }
 
 [dependencies.web-sys]
-version = "=0.3.98"
+version = "3.0.23"
 features = [
   "Element",
   "HtmlElement",
