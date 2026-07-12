@@ -29,5 +29,5 @@ ipnet = "2.9"
 # already pulled in transitively by `shared-assets`, but we declare it
 # explicitly here so a future shared-assets refactor doesn't silently
 # break our use of it.
-constant_time_eq = "0.3"
+constant_time_eq = "0.5"
 
