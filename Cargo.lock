@@ -108,7 +108,7 @@ version = "3.0.30"
 dependencies = [
  "axum",
  "chrono",
- "constant_time_eq",
+ "constant_time_eq 0.5.0",
  "dotenvy",
  "ipnet",
  "regex",
@@ -232,6 +232,12 @@ name = "constant_time_eq"
 version = "0.3.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "7c74b8349d32d297c9134b8c88677813a227df8f779daa29bfc29c183fe3dca6"
+
+[[package]]
+name = "constant_time_eq"
+version = "0.5.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "1a1ec0cfec728a79a5109075543131387f911cb4d07716436d7ae20533657a96"
 
 [[package]]
 name = "core-foundation-sys"
@@ -1608,7 +1614,7 @@ source = "git+https://github.com/UberMetroid/shared-assets.git?tag=v3.0.29#cad20
 dependencies = [
  "anyhow",
  "axum",
- "constant_time_eq",
+ "constant_time_eq 0.3.1",
  "dotenvy",
  "http-body-util",
  "ipnet",
@@ -1627,7 +1633,7 @@ name = "shared-core"
 version = "3.0.29"
 source = "git+https://github.com/UberMetroid/shared-assets.git?tag=v3.0.29#cad2021cf1809e6ac00dce80beab5f241272fc69"
 dependencies = [
- "constant_time_eq",
+ "constant_time_eq 0.3.1",
  "serde",
 ]
 
