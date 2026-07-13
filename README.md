@@ -4,7 +4,7 @@
   </a>
 </p>
 
-# Trace
+# <img src="assets/icon.png" width="32" height="32" valign="middle"> Trace
 
 [![CI](https://github.com/etecoons/trace/actions/workflows/ci.yml/badge.svg)](https://github.com/etecoons/trace/actions/workflows/ci.yml)
 
