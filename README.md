@@ -6,6 +6,8 @@
 
 # Trace
 
+[![CI](https://github.com/etecoon/trace/actions/workflows/ci.yml/badge.svg)](https://github.com/etecoon/trace/actions/workflows/ci.yml)
+
 Network diagnostic, WHOIS, IP, and ASN lookup web utility in Rust.
 
 ## Quick Start
