@@ -1,20 +1,26 @@
 # =============================================================================
-# trace — Alpine container image
+# trace — Alpine container image (Unraid-compatible)
 # =============================================================================
 # Build stage: rust:alpine (musl libc).
 # Runtime stage: alpine (musl libc) — same userspace as the build, so the
 # dynamically-linked backend binary runs natively.
 #
+# Unraid notes:
+#   - Runs as UID 99:GID 100 (nobody:nogroup) so host-mounted `/config`
+#     volumes are writable on Unraid.
+#   - Data directory is `/config` (Unraid convention). Override with
+#     DATA_DIR env var if needed.
+#   - Listens on 0.0.0.0:<port> for bridge networking.
+#
 # Build (Podman):
 #   cd ~/projects/studio2201/trace
 #   podman build -f Containerfile.ubi -t trace:latest .
 #
-# Run:
-#   podman run --rm -p 4404:4404 \
-#     -e TRACE_PIN= \
-#     -e BASE_URL=http://localhost:4404 \
-#     -e ALLOWED_ORIGINS='*' \
-#     -v trace-data:/app/data \
+# Run (Unraid-style):
+#   podman run -d --name trace \
+#     -p <host-port>:4404 \
+#     -v /mnt/user/appdata/trace:/config \
+#     -e TRACE_PIN=<your-pin> \
 #     trace:latest
 #
 
@@ -87,28 +93,33 @@ RUN cargo build --release -p backend \
 FROM docker.io/library/alpine:3.20
 
 LABEL org.opencontainers.image.title="trace" \
-      org.opencontainers.image.description="trace (Alpine, built on Alpine)" \
+      org.opencontainers.image.description="trace (Alpine, built on Alpine; Unraid-compatible)" \
       org.opencontainers.image.source="https://github.com/studio2201/trace" \
       org.opencontainers.image.base.name="docker.io/library/alpine:3.20"
 
-# Runtime deps: ca-certificates for outbound HTTPS, wget for HEALTHCHECK,
-# tini for proper signal handling.
+# Runtime deps. tini handles PID 1 and signal forwarding. wget for HEALTHCHECK.
+# ca-certificates for outbound HTTPS.
+#
+# The container runs as UID 99:GID 100 (nobody:nogroup on Unraid) so that
+# `/config` can be mounted from the host and written to without perms
+# surprises. We don't create an /etc/passwd user entry — instead we chown
+# everything to 99:100 and `USER 99:100` runs the binary directly.
 RUN apk add --no-cache \
         ca-certificates \
         tini \
         wget \
- && adduser -u 99 -G users -h /app -s /sbin/nologin -D app \
- && mkdir -p /app/data /app/frontend/dist \
- && chown -R app:users /app
+ && mkdir -p /config /app/frontend/dist \
+ && chown -R 99:100 /app /config
 
 COPY --from=builder /src/target/release/backend /app/backend
 COPY --from=builder /src/frontend/dist /app/frontend/dist
 
 WORKDIR /app
-USER 99
+USER 99:100
 
 ENV PORT=4404 \
-    RUST_LOG=info
+    RUST_LOG=info \
+
 
 EXPOSE 4404
 
