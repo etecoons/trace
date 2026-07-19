@@ -57,6 +57,7 @@ jobs:
           context: .
           file: Containerfile.ubi
           push: false
+          load: true
           tags: trace-alpine:test
           platforms: linux/amd64
 
