@@ -5,7 +5,7 @@
 # Build stage: rust official image (reliable wasm32 + trunk). Runtime is pure UBI.
 #
 # Build (Podman):
-#   cd ~/Projects/etecoons/trace
+#   cd ~/Projects/studio2201/trace
 #   podman build -f Containerfile.ubi -t trace-ubi:latest .
 #
 # Run:
@@ -18,7 +18,7 @@
 #
 
 # Compare size:
-#   podman images | grep -E 'trace-ubi|etecoons/trace'
+#   podman images | grep -E 'trace-ubi|studio2201/trace'
 # =============================================================================
 
 # ---------- build: compile backend + WASM frontend ----------
@@ -65,7 +65,7 @@ FROM registry.access.redhat.com/ubi9/ubi-minimal:latest
 
 LABEL org.opencontainers.image.title="trace" \
       org.opencontainers.image.description="trace (UBI9 minimal pilot)" \
-      org.opencontainers.image.source="https://github.com/etecoons/trace" \
+      org.opencontainers.image.source="https://github.com/studio2201/trace" \
       org.opencontainers.image.base.name="registry.access.redhat.com/ubi9/ubi-minimal"
 
 # ca-certificates for HTTPS outbound; wget for HEALTHCHECK.

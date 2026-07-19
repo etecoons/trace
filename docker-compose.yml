@@ -1,6 +1,6 @@
 services:
   trace:
-    image: ghcr.io/etecoons/trace:latest
+    image: ghcr.io/studio2201/trace:latest
     container_name: trace
     restart: unless-stopped
     ports:

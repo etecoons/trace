@@ -34,12 +34,12 @@ pub fn footer(props: &FooterProps) -> Html {
     let github_link = props
         .github_url
         .clone()
-        .unwrap_or_else(|| "https://github.com/etecoons".to_string());
+        .unwrap_or_else(|| "https://github.com/studio2201".to_string());
 
     let coffee_link = props
         .coffee_url
         .clone()
-        .unwrap_or_else(|| "https://buymeacoffee.com/etecoons".to_string());
+        .unwrap_or_else(|| "https://buymeacoffee.com/studio2201".to_string());
 
     let aria_github = lookup(StringKey::AriaGitHubProfile, Language::English);
 

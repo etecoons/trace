@@ -2,10 +2,10 @@
 name = "frontend"
 version = "3.0.37"
 edition = "2024"
-authors = ["etecoons"]
+authors = ["studio2201"]
 license = "Apache-2.0"
-repository = "https://github.com/etecoons/Trace"
-homepage = "https://github.com/etecoons/Trace"
+repository = "https://github.com/studio2201/trace"
+homepage = "https://github.com/studio2201/trace"
 description = "Yew frontend application for Trace."
 readme = "../README.md"
 

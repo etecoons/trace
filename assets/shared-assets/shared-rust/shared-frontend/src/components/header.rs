@@ -100,7 +100,7 @@ pub fn header(props: &HeaderProps) -> Html {
     let theme = Theme::from_name(&props.theme).unwrap_or_default();
 
     let site_url = props.site_url.clone().unwrap_or_else(|| {
-        format!("https://github.com/etecoons/{}", props.site_title.to_lowercase())
+        format!("https://github.com/studio2201/{}", props.site_title.to_lowercase())
     });
 
     let title_html = html! {
@@ -112,7 +112,7 @@ pub fn header(props: &HeaderProps) -> Html {
     let version_html = match &props.version {
         Some(ver) => {
             let version_url = props.version_url.clone().unwrap_or_else(|| {
-                format!("https://github.com/etecoons/{}/releases/tag/v{}", props.site_title.to_lowercase(), ver)
+                format!("https://github.com/studio2201/{}/releases/tag/v{}", props.site_title.to_lowercase(), ver)
             });
             html! {
                 <a class="header-version-link" href={version_url} target="_blank" rel="noopener noreferrer">
