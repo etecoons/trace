@@ -113,6 +113,9 @@ RUN apk add --no-cache \
 
 COPY --from=builder /src/target/release/backend /app/backend
 COPY --from=builder /src/frontend/dist /app/frontend/dist
+# Rustle's source code references 'dist/' (without the 'frontend/'
+# prefix). Symlink so the path resolves either way.
+RUN ln -s /app/frontend/dist /app/dist
 
 WORKDIR /app
 USER 99:100
