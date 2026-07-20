@@ -1,6 +1,6 @@
 [package]
 name = "frontend"
-version = "1.0.20"
+version = "1.0.21"
 edition = "2024"
 authors = ["studio2201"]
 license = "Apache-2.0"
@@ -20,8 +20,8 @@ gloo-net = "0.7"
 gloo-utils = "0.3"
 gloo-timers = { version = "0.4", features = ["futures"] }
 chrono = { version = "0.4", default-features = false, features = ["std", "serde", "clock"] }
-shared-frontend = { git = "https://github.com/studio2201/shared-assets.git", tag = "v3.0.32" }
-shared-core = { git = "https://github.com/studio2201/shared-assets.git", tag = "v3.0.32" }
+shared-frontend = { git = "https://github.com/studio2201/shared-assets.git", tag = "v3.0.33" }
+shared-core = { git = "https://github.com/studio2201/shared-assets.git", tag = "v3.0.33" }
 
 [dependencies.web-sys]
 version = "=0.3.98"
