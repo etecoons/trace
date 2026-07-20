@@ -503,39 +503,79 @@ fn run_tui() {
 
     let mut menu_selection = 0;
     loop {
-        // Draw TUI
-        print!("\x1B[2J\x1B[1;1H"); // Clear screen
-        println!("\x1B[1;36m========================================================\x1B[0m");
-        println!("\x1B[1;37m   {:^48} \x1B[0m", format!("{} Administration Console", APP_NAME));
-        println!("\x1B[1;36m========================================================\x1B[0m");
-        println!("  \x1B[1mStatus\x1B[0m:          \x1B[32mRunning\x1B[0m");
-        println!("  \x1B[1mWeb Port\x1B[0m:        {}", get_port());
-        println!("  \x1B[1mData Directory\x1B[0m:  {:?}", get_data_dir());
-        let pin_status = if get_pin().is_some() { "\x1B[32mEnabled (PIN Auth active)\x1B[0m" } else { "\x1B[33mDisabled (No authentication required)\x1B[0m" };
-        println!("  \x1B[1mSecurity PIN\x1B[0m:    {}", pin_status);
-        println!("\x1B[1;36m--------------------------------------------------------\x1B[0m");
-        println!("  Select an option:");
-        println!();
+        // Clear screen and move cursor to top-left
+        print!("\x1B[2J\x1B[1;1H");
+
+        // Theme colors
+        let clr_border = "\x1B[38;5;171m"; // Neon Magenta/Purple
+        let clr_title = "\x1B[38;5;51m\x1B[1m";  // Electric Cyan Bold
+        let clr_label = "\x1B[38;5;45m\x1B[1m";  // Bright Teal/Blue
+        let clr_reset = "\x1B[0m";
+        let clr_running = "\x1B[32;1m"; // Green Bold
+        let clr_disabled = "\x1B[33m"; // Yellow
+        let clr_enabled = "\x1B[32m"; // Green
+
+        // Draw top border
+        println!("{}╔══════════════════════════════════════════════════════════╗{}", clr_border, clr_reset);
+
+        // Draw title
+        let title = format!("{} Administration Console", APP_NAME);
+        println!("{}║{}  {:^52}  {}║{}", clr_border, clr_title, title, clr_border, clr_reset);
+        println!("{}╠══════════════════════════════════════════════════════════╣{}", clr_border, clr_reset);
+
+        // Status Card Info
+        let status_str = format!("{}● Running{}", clr_running, clr_reset);
+        println!("{}║{}  {}Status:{}          {:<38}{}║{}", clr_border, clr_reset, clr_label, clr_reset, status_str, clr_border, clr_reset);
+        println!("{}║{}  {}Web Port:{}        {:<28}{}║{}", clr_border, clr_reset, clr_label, clr_reset, get_port(), clr_border, clr_reset);
         
+        let data_dir_str = format!("{:?}", get_data_dir());
+        let data_dir_truncated = if data_dir_str.len() > 38 {
+            format!("{}...", &data_dir_str[..35])
+        } else {
+            data_dir_str
+        };
+        println!("{}║{}  {}Data Directory:{}  {:<38}{}║{}", clr_border, clr_reset, clr_label, clr_reset, data_dir_truncated, clr_border, clr_reset);
+
+        let pin_str = if get_pin().is_some() {
+            format!("{}🔒 Enabled (PIN Auth Active){}", clr_enabled, clr_reset)
+        } else {
+            format!("{}🔓 Disabled (No Auth Active){}", clr_disabled, clr_reset)
+        };
+        println!("{}║{}  {}Security PIN:{}    {:<38}{}║{}", clr_border, clr_reset, clr_label, clr_reset, pin_str, clr_border, clr_reset);
+
+        println!("{}╠══════════════════════════════════════════════════════════╣{}", clr_border, clr_reset);
+        println!("{}║{}  Select an option:                                      {}║{}", clr_border, clr_reset, clr_border, clr_reset);
+        println!("{}║{}                                                        {}║{}", clr_border, clr_reset, clr_border, clr_reset);
+
         let options = [
-            "Show Full Configuration Settings",
-            "Run System Diagnostics (Doctor)",
-            "View Database Statistics",
-            "List Database/Files Content",
-            "Reset / Clear Application State",
-            "Exit Console"
+            ("⚙ ", "Show Full Configuration Settings"),
+            ("🩺", "Run System Diagnostics (Doctor)"),
+            ("📊", "View Database Statistics"),
+            ("📂", "List Database/Files Content"),
+            ("🗑 ", "Reset / Clear Application State"),
+            ("❌", "Exit Console")
         ];
-        
-        for (i, opt) in options.iter().enumerate() {
+
+        for (i, (icon, opt)) in options.iter().enumerate() {
             if i == menu_selection {
-                println!("  \x1B[1;36m-> [ {} ] {}\x1B[0m", i + 1, opt);
+                // Draw a beautiful highlighted line
+                let opt_line = format!("  ➔  [ {} ]  {}", icon, opt);
+                let padding_spaces = 50 - (opt_line.chars().count() + 1);
+                let padded_opt_line = format!("{}{}", opt_line, " ".repeat(padding_spaces));
+                println!("{}║{}  \x1B[48;5;93m\x1B[37;1m{}\x1B[0m  {}║{}", clr_border, clr_reset, padded_opt_line, clr_border, clr_reset);
             } else {
-                println!("     [ {} ] {}", i + 1, opt);
+                let opt_line = format!("     [ {} ]  {}", icon, opt);
+                let padding_spaces = 50 - (opt_line.chars().count() + 1);
+                println!("{}║{}  {}{}  {}║{}", clr_border, clr_reset, opt_line, " ".repeat(padding_spaces), clr_border, clr_reset);
             }
         }
+
+        println!("{}║{}                                                        {}║{}", clr_border, clr_reset, clr_border, clr_reset);
+        println!("{}╚══════════════════════════════════════════════════════════╝{}", clr_border, clr_reset);
+
+        // Control instructions
         println!();
-        println!("\x1B[1;36m--------------------------------------------------------\x1B[0m");
-        println!("  Use \x1B[1m[Up/Down Arrow]\x1B[0m to navigate, \x1B[1m[Enter]\x1B[0m to select.");
+        println!("  ⌨  Use \x1B[1m[Up/Down Arrow]\x1B[0m to navigate • \x1B[1m[Enter]\x1B[0m to select • \x1B[1m[Q]\x1B[0m to quit");
         let _ = stdout.flush();
 
         // Read single key
@@ -559,7 +599,7 @@ fn run_tui() {
                 b'4' => execute_tui_option(3),
                 b'5' => execute_tui_option(4),
                 b'6' => break,
-                b'q' => break,
+                b'q' | b'Q' => break,
                 _ => {}
             }
         } else if bytes_read == 3 && key_buf[0] == 27 && key_buf[1] == 91 { // ANSI escape sequence
@@ -594,6 +634,26 @@ fn execute_tui_option(index: usize) {
     let _ = io::stdout().flush();
 
     print!("\x1B[2J\x1B[1;1H"); // Clear screen
+
+    let clr_border = "\x1B[38;5;171m"; // Neon Magenta/Purple
+    let clr_title = "\x1B[38;5;51m\x1B[1m";  // Electric Cyan Bold
+    let clr_reset = "\x1B[0m";
+
+    let headers = [
+        "CONFIGURATION SETTINGS REPORT",
+        "SYSTEM DIAGNOSTICS REPORT (DOCTOR)",
+        "DATABASE STATISTICS REPORT",
+        "DATABASE FILE CONTENT LIST",
+        "RESET APPLICATION STATE"
+    ];
+
+    if index < 5 {
+        println!("{}┌────────────────────────────────────────────────────────┐{}", clr_border, clr_reset);
+        println!("{}│{}  {:^52}  {}│{}", clr_border, clr_title, headers[index], clr_border, clr_reset);
+        println!("{}└────────────────────────────────────────────────────────┘{}", clr_border, clr_reset);
+        println!();
+    }
+
     match index {
         0 => {
             print_status();
