@@ -25,17 +25,19 @@ pub async fn fetch_asn_data(
     );
     let peering_db_url = format!("https://www.peeringdb.com/api/net?asn={}", asn_clean);
 
-    // Per-upstream throttle. The three calls below all run in parallel
-    // via `tokio::join!`, but each acquires its own limiter slot before
-    // firing so two back-to-back ASN lookups don't trip RIPE's 1 req/s
-    // limit.
-    limiter.acquire("ripe_stat");
-    limiter.acquire("ripe_overview");
-    limiter.acquire("peeringdb");
-
-    let whois_fut = client.get(&whois_url).send();
-    let overview_fut = client.get(&overview_url).send();
-    let peering_db_fut = client.get(&peering_db_url).send();
+    // Perform rate limiting concurrently inside the async tasks to prevent latency accumulation
+    let whois_fut = async {
+        limiter.acquire("ripe_stat").await;
+        client.get(&whois_url).send().await
+    };
+    let overview_fut = async {
+        limiter.acquire("ripe_overview").await;
+        client.get(&overview_url).send().await
+    };
+    let peering_db_fut = async {
+        limiter.acquire("peeringdb").await;
+        client.get(&peering_db_url).send().await
+    };
 
     let (whois_res, overview_res, peering_db_res) =
         tokio::join!(whois_fut, overview_fut, peering_db_fut);

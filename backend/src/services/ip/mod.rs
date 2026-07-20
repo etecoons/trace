@@ -37,7 +37,7 @@ pub async fn try_ip_lookup(
     let clean_ip = parsed_ip.to_string();
 
     // 1. Try ipapi.co
-    limiter.acquire("ipapi");
+    limiter.acquire("ipapi").await;
     match client
         .get(format!("https://ipapi.co/{}/json/", clean_ip))
         .timeout(Duration::from_secs(5))
@@ -61,7 +61,7 @@ pub async fn try_ip_lookup(
     // NOTE: previously this was over HTTP, leaking the user's IP lookup
     // in cleartext. Use HTTPS to match the rest of the app (which insists
     // on rustls via reqwest's `rustls-tls` feature).
-    limiter.acquire("ipapi_com");
+    limiter.acquire("ipapi_com").await;
     match client
         .get(format!("https://ip-api.com/json/{}", clean_ip))
         .timeout(Duration::from_secs(5))
@@ -105,7 +105,7 @@ pub async fn try_ip_lookup(
     }
 
     // 3. Try ipwho.is
-    limiter.acquire("ipwhois");
+    limiter.acquire("ipwhois").await;
     match client
         .get(format!("https://ipwho.is/{}", clean_ip))
         .timeout(Duration::from_secs(5))

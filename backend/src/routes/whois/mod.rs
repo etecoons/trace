@@ -5,7 +5,7 @@ mod tests;
 use crate::dns::IpAddresses;
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
-use std::net::{IpAddr, ToSocketAddrs};
+use std::net::IpAddr;
 use std::sync::LazyLock;
 use std::time::Duration;
 use tokio::io::{AsyncReadExt, AsyncWriteExt};
@@ -76,10 +76,10 @@ pub async fn resolve_public_whois_addr(target: &str) -> Result<std::net::SocketA
     }
 
     // Otherwise resolve via DNS and reject if any resolved IP is private.
-    let addrs: Vec<std::net::SocketAddr> = (host, port)
-        .to_socket_addrs()
+    let addrs = tokio::net::lookup_host(format!("{host}:{port}"))
+        .await
         .map_err(|e| format!("DNS resolution failed for {host}: {e}"))?
-        .collect();
+        .collect::<Vec<_>>();
     if addrs.is_empty() {
         return Err(format!("DNS resolution returned no addresses for {host}"));
     }

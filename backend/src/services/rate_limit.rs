@@ -39,36 +39,27 @@ impl UpstreamRateLimiter {
     }
 
     /// Wait until it's safe to call `upstream`, then record the call.
-    ///
-    /// Uses `std::thread::sleep` (blocking) rather than async sleep
-    /// because the call sites (`asn.rs`, `ip.rs`) already run inside
-    /// `tokio::join!` or sequential `await`s — blocking the worker thread
-    /// for up to 2.1s in the worst case is acceptable on a single-purpose
-    /// lookup server, and it sidesteps having to thread `async` through
-    /// every call site.
-    pub fn acquire(&self, upstream: &'static str) {
+    pub async fn acquire(&self, upstream: &'static str) {
         let Some(min) = self.min_interval.get(upstream).copied() else {
             return;
         };
-        // Read the last-call timestamp under the lock, then drop it.
+        let now = std::time::Instant::now();
         let earliest = {
-            let last = self
+            let mut last = self
                 .last_request
                 .lock()
                 .expect("rate limiter mutex poisoned");
-            last.get(upstream)
+            let next_allowed = last.get(upstream)
                 .copied()
                 .map(|t| t + min)
-                .unwrap_or_else(Instant::now)
+                .unwrap_or(now);
+            let actual_earliest = std::cmp::max(now, next_allowed);
+            last.insert(upstream, actual_earliest);
+            actual_earliest
         };
-        let now = Instant::now();
         if now < earliest {
-            std::thread::sleep(earliest - now);
+            tokio::time::sleep(earliest - now).await;
         }
-        self.last_request
-            .lock()
-            .expect("rate limiter mutex poisoned")
-            .insert(upstream, Instant::now());
     }
 }
 
@@ -82,14 +73,14 @@ impl Default for UpstreamRateLimiter {
 mod tests {
     use super::*;
 
-    #[test]
-    fn unknown_upstream_returns_immediately() {
+    #[tokio::test]
+    async fn unknown_upstream_returns_immediately() {
         let l = UpstreamRateLimiter::new();
-        l.acquire("not_in_table"); // should not panic / block
+        l.acquire("not_in_table").await; // should not panic / block
     }
 
-    #[test]
-    fn ripe_stat_interval_is_at_least_1s() {
+    #[tokio::test]
+    async fn ripe_stat_interval_is_at_least_1s() {
         let l = UpstreamRateLimiter::new();
         assert!(
             l.min_interval.get("ripe_stat").copied().unwrap() >= Duration::from_secs(1),
@@ -97,8 +88,8 @@ mod tests {
         );
     }
 
-    #[test]
-    fn peeringdb_interval_is_at_least_2s() {
+    #[tokio::test]
+    async fn peeringdb_interval_is_at_least_2s() {
         let l = UpstreamRateLimiter::new();
         assert!(
             l.min_interval.get("peeringdb").copied().unwrap() >= Duration::from_secs(2),
@@ -106,12 +97,12 @@ mod tests {
         );
     }
 
-    #[test]
-    fn second_call_is_delayed() {
+    #[tokio::test]
+    async fn second_call_is_delayed() {
         let l = UpstreamRateLimiter::new();
         let start = Instant::now();
-        l.acquire("peeringdb"); // first call: instant
-        l.acquire("peeringdb"); // second call: must wait ~2s
+        l.acquire("peeringdb").await; // first call: instant
+        l.acquire("peeringdb").await; // second call: must wait ~2s
         let elapsed = start.elapsed();
         assert!(
             elapsed >= Duration::from_millis(2000),
