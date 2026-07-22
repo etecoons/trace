@@ -12,8 +12,8 @@
   <Overview>High-performance distributed tracing and APM log analyzer web dashboard built in Rust.</Overview>
   <Category>Network:Management Tools:Utilities</Category>
   <WebUI>http://[IP]:[PORT:4404]/</WebUI>
-  <TemplateURL>https://raw.githubusercontent.com/studio2201/unraid-templates/main/templates/trace.xml</TemplateURL>
-  <Icon>https://raw.githubusercontent.com/studio2201/unraid-templates/main/icons/trace.png</Icon>
+  <TemplateURL>https://raw.githubusercontent.com/studio2201/unraid-templates/master/templates/trace.xml</TemplateURL>
+  <Icon>https://raw.githubusercontent.com/studio2201/unraid-templates/master/icons/trace.png</Icon>
   <ExtraParams/>
   <PostArgs/>
   <CPUset/>
