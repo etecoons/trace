@@ -1,4 +1,4 @@
-getrandom = { version = "0.2" }
+
 [package]
 name = "backend"
 version = "1.0.27"
@@ -11,6 +11,7 @@ description = "Axum backend service for Trace."
 readme = "../README.md"
 
 [dependencies]
+getrandom = { version = "0.2" }
 shared-core = { git = "https://github.com/studio2201/shared-assets.git", tag = "v3.0.39" }
 shared-backend = { git = "https://github.com/studio2201/shared-assets.git", tag = "v3.0.39" }
 tokio = { version = "1.36", features = ["macros", "rt-multi-thread", "net", "time", "io-util"] }
