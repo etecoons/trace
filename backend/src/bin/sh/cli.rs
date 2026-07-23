@@ -19,7 +19,7 @@ pub fn print_help() {
     println!("  data clear / reset        Delete the database to reset application state");
     println!("  help                      Show this help menu");
     println!();
-    println!("Run without arguments to launch the interactive TUI console.");
+    println!("Run without arguments to print this help menu, or pass a subcommand.");
 }
 
 pub fn handle_cli_args(args: &[String]) {
