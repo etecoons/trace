@@ -48,7 +48,7 @@ impl UpstreamRateLimiter {
             let mut last = self
                 .last_request
                 .lock()
-                .expect("rate limiter mutex poisoned");
+                .unwrap_or_else(|e| e.into_inner());
             let next_allowed = last.get(upstream)
                 .copied()
                 .map(|t| t + min)

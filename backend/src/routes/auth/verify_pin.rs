@@ -69,7 +69,16 @@ pub async fn verify_pin(
             .into_response();
     }
 
-    let expected_pin = pin_req.as_ref().unwrap();
+    let expected_pin = match pin_req.as_ref() {
+        Some(p) => p,
+        None => {
+            return (
+                StatusCode::OK,
+                Json(serde_json::json!({ "success": true })),
+            )
+                .into_response();
+        }
+    };
     let pin_str = payload.pin.as_deref().unwrap_or("").trim();
 
     if pin_str.is_empty() {
@@ -107,10 +116,9 @@ pub async fn verify_pin(
         );
 
         let mut headers = HeaderMap::new();
-        headers.insert(
-            header::SET_COOKIE,
-            header::HeaderValue::from_str(&cookie_val).unwrap(),
-        );
+        if let Ok(hv) = header::HeaderValue::from_str(&cookie_val) {
+            headers.insert(header::SET_COOKIE, hv);
+        }
         (
             StatusCode::OK,
             headers,

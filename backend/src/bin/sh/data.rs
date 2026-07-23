@@ -33,10 +33,10 @@ pub fn print_data_stats() {
                 println!("File Size: {} bytes", meta.len());
                 if let Ok(content) = fs::read_to_string(&path) {
                     if let Ok(value) = serde_json::from_str::<serde_json::Value>(&content) {
-                        if value.is_object() {
-                            println!("Number of database keys: {}", value.as_object().unwrap().keys().len());
-                        } else if value.is_array() {
-                            println!("Number of database entries: {}", value.as_array().unwrap().len());
+                        if let Some(obj) = value.as_object() {
+                            println!("Number of database keys: {}", obj.keys().len());
+                        } else if let Some(arr) = value.as_array() {
+                            println!("Number of database entries: {}", arr.len());
                         }
                     }
                 }

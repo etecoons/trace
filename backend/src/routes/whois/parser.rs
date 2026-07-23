@@ -3,12 +3,13 @@ use crate::dns::{IpAddresses, resolve_dns};
 use std::sync::LazyLock;
 
 static RE_IPV4: LazyLock<regex::Regex> = LazyLock::new(|| {
-    regex::Regex::new(r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b").unwrap()
+    regex::Regex::new(r"\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b")
+        .unwrap_or_else(|_| regex::Regex::new("").unwrap_or_else(|_| unreachable!()))
 });
 
 static RE_IPV6: LazyLock<regex::Regex> = LazyLock::new(|| {
     regex::Regex::new(r"(?i)\b(?:[0-9a-f]{1,4}:){1,7}(?:[0-9a-f]{1,4}|:)|(?:::[0-9a-f]{1,4})\b")
-        .unwrap()
+        .unwrap_or_else(|_| regex::Regex::new("").unwrap_or_else(|_| unreachable!()))
 });
 
 pub fn extract_ips_from_raw(raw_data: &str) -> IpAddresses {

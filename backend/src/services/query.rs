@@ -1,15 +1,23 @@
+use std::sync::LazyLock;
+
+static RE_ASN: LazyLock<regex::Regex> = LazyLock::new(|| {
+    regex::Regex::new(r"(?i)^(AS)?\d+$")
+        .unwrap_or_else(|_| regex::Regex::new("").unwrap_or_else(|_| unreachable!()))
+});
+
+static RE_IPV4: LazyLock<regex::Regex> = LazyLock::new(|| {
+    regex::Regex::new(r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\/\d{1,2})?$")
+        .unwrap_or_else(|_| regex::Regex::new("").unwrap_or_else(|_| unreachable!()))
+});
+
 pub fn detect_query_type(query: &str) -> &'static str {
     let clean = query.replace(['[', ']'], "");
 
-    // ASN pattern
-    let re_asn = regex::Regex::new(r"(?i)^(AS)?\d+$").unwrap();
-    if re_asn.is_match(&clean) {
+    if RE_ASN.is_match(&clean) {
         return "asn";
     }
 
-    // IPv4 pattern
-    let re_ipv4 = regex::Regex::new(r"^(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)(?:\/\d{1,2})?$").unwrap();
-    if re_ipv4.is_match(&clean) {
+    if RE_IPV4.is_match(&clean) {
         return "ip";
     }
 

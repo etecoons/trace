@@ -28,23 +28,19 @@ use state::AppState;
 const RATE_LIMIT_WINDOW: Duration = Duration::from_secs(60);
 
 #[tokio::main]
-async fn main() {
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
     init_tracing(default_log_dir().as_deref());
 
     let config = AppConfig::load();
     let client = reqwest::Client::builder()
         .timeout(Duration::from_secs(10))
-        .build()
-        .expect("Failed to build reqwest client");
+        .build()?;
 
     let upstream_limiter = Arc::new(UpstreamRateLimiter::new());
     let state = AppState::new(config.clone(), client, upstream_limiter.clone());
 
     lookup::generate_pwa_manifest(&config.0.site_title);
 
-    // Background cleanup. PIN-attempt lockouts are now global via
-    // shared-backend and clean themselves up; we only need to clean the
-    // per-IP rate-limiter table.
     let state_clone = state.clone();
     let window = RATE_LIMIT_WINDOW;
     tokio::spawn(async move {
@@ -54,9 +50,6 @@ async fn main() {
         }
     });
 
-    // shared-backend drives the security middleware from a single
-    // ServerConfig. The TRACE prefix makes `TRACE_PIN`, `TRACE_PORT`,
-    // `TRACE_SITE_TITLE`, etc. take precedence over generic env vars.
     let server_config = Arc::new(ServerConfig::from_env("TRACE"));
     let cors = cors_layer(&server_config);
 
@@ -87,10 +80,6 @@ async fn main() {
             auth::origin_validation_middleware,
         ));
 
-    // Per-upstream throttle for outbound calls is held in AppState
-    // (`state.upstream_limiter`) so `asn::fetch_asn_data` and
-    // `ip::try_ip_lookup` can `acquire(...)` before each request.
-
     let app = Router::new()
         .nest("/api", api_routes)
         .route("/config", get(lookup::serve_config))
@@ -98,9 +87,6 @@ async fn main() {
         .route("/", get(lookup::serve_index))
         .route("/index.html", get(lookup::serve_index))
         .fallback_service(ServeDir::new("frontend/dist"))
-        // shared-backend layers: title injection sees the raw HTML,
-        // security headers add CSP/X-Frame-Options/etc., HSTS is HTTPS-only,
-        // CORS is outermost so preflight requests aren't gated by auth.
         .layer(middleware::from_fn_with_state(
             TitleState(server_config.clone()),
             title_injection_layer,
@@ -117,27 +103,38 @@ async fn main() {
     let addr = SocketAddr::from(([0, 0, 0, 0], config.0.port));
     tracing::info!("Starting server on {}", addr);
 
-    let listener = tokio::net::TcpListener::bind(addr)
-        .await
-        .expect("failed to bind");
+    let listener = tokio::net::TcpListener::bind(addr).await?;
     axum::serve(
         listener,
         app.into_make_service_with_connect_info::<SocketAddr>(),
     )
     .with_graceful_shutdown(graceful_shutdown())
-    .await
-    .expect("server error");
+    .await?;
+
+    Ok(())
 }
 
 async fn graceful_shutdown() {
     use tokio::signal::unix::{SignalKind, signal};
 
-    let mut sigint = signal(SignalKind::interrupt()).expect("install SIGINT handler");
-    let mut sigterm = signal(SignalKind::terminate()).expect("install SIGTERM handler");
+    let mut sigint = signal(SignalKind::interrupt()).ok();
+    let mut sigterm = signal(SignalKind::terminate()).ok();
 
     tokio::select! {
-        _ = sigint.recv() => tracing::info!("received SIGINT"),
-        _ = sigterm.recv() => tracing::info!("received SIGTERM"),
+        _ = async {
+            if let Some(ref mut s) = sigint {
+                s.recv().await;
+            } else {
+                std::future::pending::<()>().await;
+            }
+        } => tracing::info!("received SIGINT"),
+        _ = async {
+            if let Some(ref mut s) = sigterm {
+                s.recv().await;
+            } else {
+                std::future::pending::<()>().await;
+            }
+        } => tracing::info!("received SIGTERM"),
     }
 
     tracing::info!("draining connections (5s)");

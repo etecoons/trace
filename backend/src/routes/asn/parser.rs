@@ -83,9 +83,12 @@ pub fn parse_raw_responses(
         if cc.is_empty() { None } else { Some(cc) }
     };
     if country_code.is_none() && !holder.is_empty() {
-        let re_cc = regex::Regex::new(r",\s*([A-Z]{2})$").unwrap();
-        if let Some(caps) = re_cc.captures(&holder) {
-            country_code = Some(caps.get(1).unwrap().as_str().to_string());
+        if let Ok(re_cc) = regex::Regex::new(r",\s*([A-Z]{2})$") {
+            if let Some(caps) = re_cc.captures(&holder) {
+                if let Some(m) = caps.get(1) {
+                    country_code = Some(m.as_str().to_string());
+                }
+            }
         }
     }
 

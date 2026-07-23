@@ -84,30 +84,27 @@ impl App {
                 let link = ctx.link().clone();
                 wasm_bindgen_futures::spawn_local(async move {
                     let body = serde_json::json!({ "pin": pin });
-                    match Request::post("/api/verify-pin")
-                        .json(&body)
-                        .unwrap()
-                        .send()
-                        .await
-                    {
-                        Ok(resp) if resp.status() == 200 => {
-                            link.send_message(Msg::VerifyPinSuccess)
-                        }
-                        Ok(resp) => {
-                            let msg = resp
-                                .json::<serde_json::Value>()
-                                .await
-                                .ok()
-                                .and_then(|j| {
-                                    j.get("error")
-                                        .and_then(|v| v.as_str())
-                                        .map(|s| s.to_string())
-                                })
-                                .unwrap_or_else(|| "Invalid PIN".to_string());
-                            link.send_message(Msg::VerifyPinFailure(msg));
-                        }
-                        Err(_) => {
-                            link.send_message(Msg::VerifyPinFailure("Connection error".to_string()))
+                    let req_res = Request::post("/api/verify-pin").json(&body);
+                    match req_res {
+                        Ok(req) => match req.send().await {
+                            Ok(resp) if resp.status() == 200 => {
+                                link.send_message(Msg::VerifyPinSuccess)
+                            }
+                            Ok(resp) => {
+                                let msg = resp
+                                    .json::<serde_json::Value>()
+                                    .await
+                                    .ok()
+                                    .and_then(|v| v.get("error").and_then(|e| e.as_str().map(|s| s.to_string())))
+                                    .unwrap_or_else(|| "Invalid PIN".to_string());
+                                link.send_message(Msg::VerifyPinFailure(msg));
+                            }
+                            Err(e) => {
+                                link.send_message(Msg::VerifyPinFailure(e.to_string()));
+                            }
+                        },
+                        Err(e) => {
+                            link.send_message(Msg::VerifyPinFailure(e.to_string()));
                         }
                     }
                 });

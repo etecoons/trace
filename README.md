@@ -1,65 +1,100 @@
+<h1 align="center">
+  <img src="https://raw.githubusercontent.com/studio2201/.github/master/profile/assets/trace.png" width="48" height="48" valign="middle"> Trace
+</h1>
+
 <p align="center">
-  <a href="https://github.com/studio2201">
-    <img src="assets/header.jpg" alt="studio2201 banner" width="100%">
-  </a>
+  <b>High-performance ASN, IP, WHOIS, and network intelligence diagnostic dashboard written in Rust.</b>
 </p>
 
-# <img src="assets/icon.png" width="32" height="32" valign="middle"> Trace
+---
 
-Network WHOIS diagnostics, domain IP lookup, and ASN tracer helper.
+### Instant One-Line Install (Docker Container)
 
-## Quick Start (Docker)
+Run the official zero-dependency container on port 8080:
 
-Pull and run the official Docker container:
 ```bash
-docker run -d \
-  -p 4404:4404 \
-  -v /path/to/appdata:/config \
-  -e TRACE_PIN=your_secret_pin \
-  ghcr.io/studio2201/trace:latest
+docker run -d --name trace -p 8080:8080 -v /mnt/user/appdata/trace:/config ghcr.io/studio2201/trace:latest
 ```
 
-## Configuration
+Open your browser to `http://localhost:8080` to access the IP & ASN intelligence dashboard.
 
-The service can be customized using the following container environment variables:
+---
+
+### One-Line Install (Native Package Manager)
+
+On Debian, Ubuntu, Fedora, or RHEL:
+
+```bash
+curl -fsSL https://studio2201.github.io/packages/install.sh | sudo bash
+```
+
+---
+
+### Unraid NAS Deployment
+
+Deploy via the official Unraid Template:
+
+1. Copy [`trace.xml`](trace.xml) to your Unraid flash drive under `/boot/config/plugins/dockerMan/templates-user/`.
+2. Open **Docker** -> **Add Container** -> Select **trace** from the template dropdown.
+3. Click **Apply**.
+
+---
+
+### Environment Configuration
+
+The backend service can be customized using the following environment variables:
 
 | Variable | Description | Default |
-| :--- | :--- | :--- |
-| `PORT` | The network port the web server binds to | `4404` |
-| `TRACE_PIN` | Security PIN code required for client authentication | (None) |
-| `TRACE_DATA_DIR` | Directory path where persistent data is stored | `/config` |
+| :--- | :--- | :---: |
+| `TRACE_PORT` | Network port the web server binds to | `8080` |
+| `TRACE_PIN` | Security PIN required for application access | *(Disabled)* |
+| `TRACE_SITE_TITLE` | Custom branding title for web dashboard | `Trace` |
 | `TRACE_ALLOWED_ORIGINS` | CORS allowed origins list (comma-separated) | `*` |
-| `TZ` | System timezone | `UTC` |
-| `TRUST_PROXY` | Whether to honor upstream reverse proxy headers | `false` |
-| `TRUSTED_PROXY_IPS` | Comma-separated CIDR/IP list of trusted reverse proxies | (None) |
-| `LOG_DIR` | Directory where diagnostic log files are written | (Disabled) |
-| `LOG_LEVEL` | Logging verbosity filter (`error`, `warn`, `info`, `debug`) | `info` |
+| `TRUST_PROXY` | Honor reverse proxy headers (`X-Forwarded-For`) | `false` |
+| `TRUSTED_PROXY_IPS` | Comma-separated CIDR list of trusted reverse proxies | *(None)* |
+| `LOG_LEVEL` | Tracing filter (`error`, `warn`, `info`, `debug`) | `info` |
 
-## Administration Console (CLI & TUI)
+---
 
-Each container includes a built-in admin tool located in the system path as `trace`. To open the console, execute a shell inside the container:
+### Administration CLI & TUI Dashboard
+
+Every container and package includes a built-in administration utility (`trace`).
+
+Launch interactive TUI dashboard:
 ```bash
-docker exec -it <container-name> sh
+docker exec -it trace trace tui
 ```
-Then, run `trace` to manage the application:
+
+System diagnostics and self-healing check:
 ```bash
-trace [command]
+docker exec -it trace trace doctor
 ```
-Running `trace` without arguments or running `trace tui` launches the interactive terminal user interface.
 
-### CLI Commands
+CLI Command Reference:
+- `trace tui` — Interactive terminal user interface.
+- `trace doctor` — Diagnoses network connectivity, DNS resolvers, and rate limits.
+- `trace status` — Displays service configuration and security settings.
+- `trace data stats` — Shows lookup metrics and cache stats.
 
-| Command | Aliases | Description |
-| :--- | :--- | :--- |
-| `tui` | (Default) | Launch the interactive arrow-key TUI panel dashboard |
-| `doctor` | `check`, `diagnose` | Perform health diagnostics on directories, port, and databases |
-| `start` | `up`, `run` | Launch the main web server process if stopped |
-| `stop` | `down`, `terminate`, `close` | Gracefully shut down the web server (stops the container) |
-| `restart` | `reload` | Perform a stop and start cycle on the server process |
-| `status` | `info` | Display current network and settings configurations |
-| `env` | | List the loaded environment variables for the service |
-| `version` | `-v`, `--version` | Display the compiled version of the application |
-| `data stats` | `data size`, `data info` | View storage file sizes and entry counts |
-| `data list` | `data show`, `data view` | Show records (tasks, high scores, etc.) stored in the database |
-| `data clear` | `data prune`, `data reset` | Reset the database to a clean, empty state (interactive) |
-| `help` | `-h`, `--help` | Show the help information page |
+---
+
+### Architecture & Security
+
+- **Axum Web Backend**: High-concurrency async HTTP runtime built on Tokio.
+- **Yew WebAssembly Frontend**: Client-side single-page app compiled to WASM.
+- **Upstream Rate Limiting**: Throttles PeeringDB, RIPE Stat, and RDAP APIs to prevent IP bans.
+- **Fail-Closed Security PIN Authentication**: Rate-limited brute force protection with automatic lockout timers.
+
+---
+
+### License
+
+Distributed under the Apache 2.0 License. See [LICENSE](LICENSE) for details.
+
+---
+
+<p align="center">
+  <a href="https://github.com/studio2201/trace">
+    <img src="assets/trace-header.jpg" alt="studio2201 banner" width="100%">
+  </a>
+</p>
