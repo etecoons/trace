@@ -20,8 +20,8 @@ gloo-net = "0.7"
 gloo-utils = "0.3"
 gloo-timers = { version = "0.4", features = ["futures"] }
 chrono = { version = "0.4", default-features = false, features = ["std", "serde", "clock"] }
-shared-frontend = { git = "https://github.com/studio2201/shared-assets.git", tag = "v3.0.33" }
-shared-core = { git = "https://github.com/studio2201/shared-assets.git", tag = "v3.0.33" }
+shared-frontend = { git = "https://github.com/studio2201/shared-assets.git", tag = "v3.0.34" }
+shared-core = { git = "https://github.com/studio2201/shared-assets.git", tag = "v3.0.34" }
 
 [dependencies.web-sys]
 version = "=0.3.98"

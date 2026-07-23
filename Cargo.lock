@@ -104,7 +104,7 @@ dependencies = [
 
 [[package]]
 name = "backend"
-version = "1.0.21"
+version = "1.0.27"
 dependencies = [
  "axum",
  "chrono",
@@ -206,8 +206,10 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "1aa79e62e7697b8e29b513a68abacf485adcd1fe8284a4316c5ae868e6633327"
 dependencies = [
  "iana-time-zone",
+ "js-sys",
  "num-traits",
  "serde",
+ "wasm-bindgen",
  "windows-link",
 ]
 
@@ -386,7 +388,7 @@ dependencies = [
 
 [[package]]
 name = "frontend"
-version = "1.0.21"
+version = "1.0.27"
 dependencies = [
  "chrono",
  "gloo-net 0.7.0",
@@ -1689,8 +1691,8 @@ dependencies = [
 
 [[package]]
 name = "shared-backend"
-version = "3.0.33"
-source = "git+https://github.com/studio2201/shared-assets.git?tag=v3.0.33#5c1f076b40ab66804648a645cc37978056d104f5"
+version = "3.0.34"
+source = "git+https://github.com/studio2201/shared-assets.git?tag=v3.0.34#839f05138c4e95e07d57e2e307a86f8558a1b65f"
 dependencies = [
  "anyhow",
  "axum",
@@ -1711,8 +1713,8 @@ dependencies = [
 
 [[package]]
 name = "shared-core"
-version = "3.0.33"
-source = "git+https://github.com/studio2201/shared-assets.git?tag=v3.0.33#5c1f076b40ab66804648a645cc37978056d104f5"
+version = "3.0.34"
+source = "git+https://github.com/studio2201/shared-assets.git?tag=v3.0.34#839f05138c4e95e07d57e2e307a86f8558a1b65f"
 dependencies = [
  "constant_time_eq 0.3.1",
  "serde",
@@ -1720,8 +1722,8 @@ dependencies = [
 
 [[package]]
 name = "shared-frontend"
-version = "3.0.33"
-source = "git+https://github.com/studio2201/shared-assets.git?tag=v3.0.33#5c1f076b40ab66804648a645cc37978056d104f5"
+version = "3.0.34"
+source = "git+https://github.com/studio2201/shared-assets.git?tag=v3.0.34#839f05138c4e95e07d57e2e307a86f8558a1b65f"
 dependencies = [
  "js-sys",
  "serde",
