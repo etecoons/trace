@@ -4,13 +4,14 @@ use axum::{Router, middleware, routing::get};
 use shared_backend::middleware::{
     HstsState, TitleState, cors_layer, hsts_layer, security_headers_layer, title_injection_layer,
 };
-use shared_backend::server::ServerConfig;
+use crate::config::AppConfig;
 use shared_backend::tracing_init::{default_log_dir, init_tracing};
 use std::net::SocketAddr;
 use std::sync::Arc;
 use std::time::Duration;
 use tower_http::services::ServeDir;
 
+mod ip;
 mod asn_types;
 mod config;
 mod cookie_auth;
