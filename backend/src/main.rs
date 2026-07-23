@@ -117,9 +117,11 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 async fn graceful_shutdown() {
     use tokio::signal::unix::{SignalKind, signal};
 
+
+
+
 mod cookie_auth;
 mod session_id;
-
     let mut sigint = signal(SignalKind::interrupt()).ok();
     let mut sigterm = signal(SignalKind::terminate()).ok();
 
