@@ -13,15 +13,6 @@ use std::time::Duration;
 use super::{COOKIE_NAME, VerifyPinPayload};
 use crate::state::AppState;
 
-pub fn generate_session_id() -> String {
-    use std::fs::File;
-    use std::io::Read;
-    let file = File::open("/dev/urandom").ok();
-    let mut bytes = [0u8; 16];
-    if let Some(mut f) = file {
-        if f.read_exact(&mut bytes).is_ok() {
-            return bytes.iter().map(|b| format!("{:02x}", b)).collect();
-        }
     }
     let random_val = std::time::SystemTime::now()
         .duration_since(std::time::UNIX_EPOCH)
@@ -92,7 +83,7 @@ pub async fn verify_pin(
     if constant_time_eq(pin_str.as_bytes(), expected_pin.as_bytes()) {
         attempts::reset_attempts(&ip_str);
 
-        let session_id = generate_session_id();
+        let session_id = shared_backend::session_id::generate_session_id();
         state
             .active_sessions
             .write()
@@ -107,23 +98,22 @@ pub async fn verify_pin(
             .map(|v| v.eq_ignore_ascii_case("https"))
             .unwrap_or_else(|| state.config.0.base_url.starts_with("https"));
 
-        let cookie_val = format!(
-            "{}={}; Path=/; HttpOnly; SameSite=Strict; Max-Age={}{}",
-            COOKIE_NAME,
-            session_id,
-            cookie_max_age.as_secs(),
-            if secure { "; Secure" } else { "" }
-        );
-
         let mut headers = HeaderMap::new();
         if let Ok(hv) = header::HeaderValue::from_str(&cookie_val) {
             headers.insert(header::SET_COOKIE, hv);
         }
-        (
-            StatusCode::OK,
-            headers,
-            Json(serde_json::json!({ "success": true })),
-        )
+        let cookie = shared_backend::cookie_auth::build_cookie(
+            COOKIE_NAME,
+            &session_id,
+            state.config.cookie_max_age_hours,
+            secure,
+        );
+        let cookie_str = cookie.to_string();
+        let mut headers = HeaderMap::new();
+        if let Ok(val) = header::HeaderValue::from_str(&cookie_str) {
+            headers.insert(header::SET_COOKIE, val);
+        }
+        (StatusCode::OK, headers, Json(serde_json::json!({ "success": true })))\
             .into_response()
     } else {
         let attempt = attempts::record_attempt(&ip_str);
